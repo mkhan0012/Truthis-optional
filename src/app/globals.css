@@ -1,65 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #050505;
-  --foreground: #e0e0e0;
+@theme {
+  /* --- HORROR / SUSPICIOUS PALETTE --- */
+  --color-void: #000000;          /* Pitch Black */
+  --color-surface: #0a0a0a;       /* Barely visible dark grey */
+  --color-surfaceHighlight: #171717; /* Hover State */
+  --color-border: #262626;        /* Subtle Borders */
+  
+  /* --- TYPOGRAPHY COLORS --- */
+  --color-primary: #d4d4d4;       /* Ghostly White (Off-white) */
+  --color-secondary: #737373;     /* Faded Text (Neutral-500) */
+  --color-muted: #404040;         /* Dark lines */
+
+  /* --- ACCENTS --- */
+  --color-accent: #f5f5f5;        /* Pure White (for highlights) */
+  --color-signal: #7f1d1d;        /* BLOOD RED (Warning/Analysis) */
+  
+  /* --- FONTS (Monospace priority for Classified vibe) --- */
+  --font-sans: "Courier New", Courier, monospace; /* Defaulting to Mono */
+  --font-serif: var(--font-canela);
+  --font-mono: var(--font-jetbrains), "Courier New", Courier, monospace;
 }
 
-@theme inline {
-  --color-cyber-black: #030304;
-  --color-cyber-dark: #0a0a0f;
-  --color-cyber-gray: #1f1f2e;
-  --color-cyber-neon: #00f3ff;
-  --color-cyber-danger: #ff003c;
-  --color-cyber-warning: #fcee0a;
-  --color-cyber-success: #00ff9d;
-  --color-cyber-purple: #bd00ff;
-  
-  --font-orbitron: var(--font-orbitron);
-  --font-mono: var(--font-mono);
+:root {
+  background-color: var(--color-void);
+  color: var(--color-primary);
 }
 
 body {
-  background-color: var(--color-cyber-black);
-  /* Cyber Grid Background */
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-color: var(--color-void);
+  color: var(--color-primary);
+  -webkit-font-smoothing: antialiased;
+  
+  /* The "Suspicious" Cursor */
+  cursor: crosshair; 
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #0a0a0f;
-}
-::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-cyber-neon);
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Range Slider Styling */
-input[type=range] {
-  -webkit-appearance: none;
-  background: transparent;
+/* Custom Selection - Blood Red Background */
+::selection {
+  background: var(--color-signal);
+  color: white;
 }
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 20px;
-  width: 10px;
-  background: var(--color-cyber-neon);
-  cursor: pointer;
-  margin-top: -8px;
-  box-shadow: 0 0 10px var(--color-cyber-neon);
-}
-input[type=range]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: #333;
+
+/* --- UTILITIES: HORROR GRAIN --- */
+/* This creates the TV Static / Film Grain overlay */
+.bg-noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.06; /* Adjust visibility of grain here */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }

@@ -1,457 +1,530 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-// 1. ADDED LINK IMPORT
-import Link from 'next/link';
-import { Play, ArrowRight, Eye, Zap, Sliders, Lock, Activity, MousePointer2, RotateCw } from 'lucide-react';
-import { generateRealities } from '@/lib/engine';
-import RealityCard from '@/components/RealityCard';
-import GlitchText from '@/components/GlitchText'; 
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Quote, Eye } from "lucide-react";
 
-// --- SCROLL SECTION COMPONENT ---
-function Section({ children, className = "" }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10%" }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`min-h-[60vh] flex flex-col justify-center items-center text-center p-6 ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
-}
+// --- ANIMATION CONFIG ---
+const fadeUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
 
-// --- LANDING PAGE ( The Manifesto ) ---
-function LandingPage({ onEnter }) {
-  // Animation variant for the blinking eye effect
-  const blinkingEyeVariants = {
-    initial: { scaleY: 1 },
-    hover: {
-      scaleY: [1, 0.1, 1], // Squashes down and back up
-      transition: {
-        duration: 0.25, // Quick blink duration
-        times: [0, 0.5, 1],
-        ease: "easeInOut",
-        repeat: Infinity, // Keeps blinking while hovered
-        repeatDelay: 2.5 // Waits 2.5 seconds between blinks for realism
-      }
+// --- INTERACTIVE COMPONENTS ---
+
+const ReactionTest = () => {
+  const [state, setState] = useState('idle'); // idle, waiting, ready, done
+  const [result, setResult] = useState(null);
+  const startTimeRef = useRef(null);
+
+  const startTest = () => {
+    setState('waiting');
+    setResult(null);
+    const delay = 1000 + Math.random() * 2000;
+    setTimeout(() => {
+      setState('ready');
+      startTimeRef.current = Date.now();
+    }, delay);
+  };
+
+  const handleClick = () => {
+    if (state === 'ready') {
+      const time = Date.now() - startTimeRef.current;
+      setResult(time);
+      setState('done');
+    } else if (state === 'waiting') {
+      setState('idle'); 
+      alert("Too early. Wait for the signal.");
     }
   };
 
   return (
-    <div className="bg-black text-white selection:bg-cyber-neon selection:text-black overflow-x-hidden">
+    <div className="border border-neutral-800 bg-neutral-900/30 p-8 my-12 text-center select-none relative group">
+      <div className="absolute top-0 left-0 w-1 h-full bg-red-900 group-hover:bg-red-600 transition-colors" />
+      <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-6">Interaction: The Millisecond Gap</h3>
       
-      {/* 2. ADDED NAVIGATION BUTTON HERE */}
-      <nav className="fixed top-0 right-0 p-6 z-50 mix-blend-difference">
-        <Link href="/about" className="group flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-500 hover:text-cyber-neon transition-colors cursor-pointer">
-          <span className="opacity-70 group-hover:opacity-100 transition-opacity">About / Manifesto</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </nav>
-
-      {/* Background Noise & Grid */}
-      <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none z-0"></div>
-
-      {/* --- HERO SECTION --- */}
-      <div className="min-h-screen flex flex-col justify-center items-center relative z-10">
-        {/* Blinking Eye Container */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-          whileHover="hover" // Triggers the blink variant on hover
-          className="relative mb-8 cursor-pointer group"
-        >
-           {/* Background Glow */}
-           <div className="absolute -inset-10 bg-cyber-neon/20 blur-[100px] rounded-full opacity-50 animate-pulse-slow group-hover:bg-cyber-neon/30 transition-colors duration-500"></div>
-           
-           {/* The Eye Icon wrapped in motion div for blinking */}
-           <motion.div variants={blinkingEyeVariants} className="relative z-10">
-             <Eye className="w-20 h-20 text-cyber-neon group-hover:text-white transition-colors duration-300" />
-           </motion.div>
-        </motion.div>
-
-        <GlitchText text="REALITY DISTORTION SIMULATOR" className="text-4xl md:text-7xl font-bold font-orbitron tracking-tighter text-center mb-6" />
-        
-        <p className="text-gray-400 font-mono tracking-[0.3em] uppercase text-sm md:text-base mb-12 animate-pulse">
-          Truth is optional. Perception is programmable.
-        </p>
-
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-10 flex flex-col items-center gap-2"
-        >
-           <span className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">Scroll to Initiate</span>
-           <div className="w-[1px] h-16 bg-gradient-to-b from-cyber-neon to-transparent"></div>
-        </motion.div>
-      </div>
-
-      {/* --- CHAPTER 1: THE REVEAL --- */}
-      <Section>
-        <h2 className="text-3xl md:text-5xl font-light leading-tight mb-8">
-          What you read <br />
-          <span className="font-serif italic text-gray-500">is not what happened.</span>
-        </h2>
-        <p className="text-xl md:text-2xl text-cyber-neon/80 font-mono">
-          It’s what you were meant to feel.
-        </p>
-      </Section>
-
-      <Section>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl">
-          <div className="p-6 border-l border-cyber-neon/30">
-            <h3 className="text-xl font-orbitron mb-2">The Same Fact.</h3>
-          </div>
-          <div className="p-6 border-l border-cyber-neon/30">
-            <h3 className="text-xl font-orbitron mb-2">Different Realities.</h3>
-          </div>
-          <div className="p-6 border-l border-cyber-neon/30">
-            <h3 className="text-xl font-orbitron mb-2">All Believable.</h3>
-          </div>
-        </div>
-        <p className="mt-12 text-gray-500 font-mono text-sm max-w-2xl">
-          This is not a news app. This is not an opinion engine. <br/>
-          <span className="text-white">This is a simulation of how your perception is manipulated.</span>
-        </p>
-      </Section>
-
-      {/* --- CHAPTER 2: THE WARNING --- */}
-      <Section className="bg-cyber-danger/5 border-y border-cyber-danger/20">
-        <div className="flex items-center gap-4 mb-6">
-          <Activity className="w-8 h-8 text-cyber-danger animate-pulse" />
-          <h2 className="text-2xl font-mono text-cyber-danger tracking-widest uppercase">WARNING</h2>
-        </div>
-        <h3 className="text-4xl md:text-6xl font-bold mb-8">
-          You are not immune to bias.
-        </h3>
-        <p className="text-gray-400 font-mono mb-8">No one is.</p>
-        
-        <div className="space-y-4 text-lg md:text-xl font-light text-gray-300">
-          <p>Every headline you scroll.</p>
-          <p>Every stat you trust.</p>
-          <p>Every narrative you repeat.</p>
-          <p className="text-white pt-4">Has already passed through filters you didn’t choose.</p>
-        </div>
-      </Section>
-
-      {/* --- CHAPTER 3: THE MECHANISM --- */}
-      <Section>
-        <div className="flex flex-col md:flex-row items-center gap-6 text-2xl md:text-4xl font-orbitron font-bold text-gray-500 mb-12">
-          <span className="text-white">INPUT</span>
-          <ArrowRight className="text-cyber-neon" />
-          <span className="text-white">DISTORT</span>
-          <ArrowRight className="text-cyber-neon" />
-          <span className="text-cyber-neon drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">BELIEVE</span>
-        </div>
-
-        <div className="max-w-3xl text-left space-y-6 font-mono text-sm md:text-base border border-white/10 p-8 rounded-xl bg-white/5 backdrop-blur-md">
-          <p className="text-gray-400">Paste a fact. Any fact.</p>
-          <p className="text-white">Now watch it fracture:</p>
-          <ul className="space-y-3 pl-4 border-l-2 border-cyber-neon/50">
-            <li className="text-red-400">One version makes you anxious.</li>
-            <li className="text-green-400">One calms you down.</li>
-            <li className="text-orange-400">One makes you angry.</li>
-            <li className="text-purple-400">One makes you obedient.</li>
-            <li className="text-blue-400">One makes you feel "informed".</li>
-          </ul>
-          <p className="text-right text-gray-500 pt-4">// All from the same truth.</p>
-        </div>
-      </Section>
-
-      {/* --- CHAPTER 4: THE PHILOSOPHY --- */}
-      <Section>
-        <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-4">
-          REALITY IS NOT BROKEN.
-        </h2>
-        <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyber-neon to-cyber-purple mb-12">
-          IT IS FRAMED.
-        </h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 font-mono text-sm uppercase tracking-widest text-gray-400">
-          <div className="flex flex-col items-center gap-3">
-             <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div>
-             Fear
-          </div>
-          <div className="flex flex-col items-center gap-3">
-             <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_blue]"></div>
-             Authority
-          </div>
-          <div className="flex flex-col items-center gap-3">
-             <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_green]"></div>
-             Hope
-          </div>
-          <div className="flex flex-col items-center gap-3">
-             <div className="w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_10px_yellow]"></div>
-             Doubt
-          </div>
-        </div>
-        
-        <p className="mt-12 text-xl font-light">
-          Change the tone <span className="text-cyber-neon">→</span> Change the meaning <span className="text-cyber-neon">→</span> <span className="text-white font-bold">Change the belief.</span>
-        </p>
-      </Section>
-
-      {/* --- CHAPTER 5: THE FEATURES --- */}
-      <Section className="gap-16">
-        {/* Feature 1 */}
-        <div className="max-w-4xl w-full flex flex-col md:flex-row items-center gap-8 text-left">
-           <div className="flex-1">
-             <h3 className="text-2xl font-orbitron mb-4 text-cyber-purple flex items-center gap-3">
-               <Zap className="w-6 h-6" /> PARALLEL REALITIES
-             </h3>
-             <p className="text-gray-400 font-mono leading-relaxed">
-               You don’t get the truth. You get a version. Switch realities. Break continuity. Watch narratives glitch.
-             </p>
-           </div>
-           <div className="flex-1 font-mono text-xs text-gray-600 border border-gray-800 p-4 rounded bg-black">
-              Which one feels right to you? <br/>
-              And why?
-           </div>
-        </div>
-
-        {/* Feature 2 */}
-        <div className="max-w-4xl w-full flex flex-col md:flex-row-reverse items-center gap-8 text-left">
-           <div className="flex-1">
-             <h3 className="text-2xl font-orbitron mb-4 text-cyber-neon flex items-center gap-3">
-               <Eye className="w-6 h-6" /> BIAS IS INVISIBLE
-             </h3>
-             <p className="text-gray-400 font-mono leading-relaxed">
-               Every distorted reality reveals the bias applied, the cognitive shortcut exploited, and the emotional trigger activated.
-             </p>
-           </div>
-           <div className="flex-1 font-mono text-xs text-gray-600 border border-gray-800 p-4 rounded bg-black">
-              Nothing hidden. <br/>
-              Nothing softened.
-           </div>
-        </div>
-
-        {/* Feature 3 */}
-        <div className="max-w-4xl w-full flex flex-col md:flex-row items-center gap-8 text-left">
-           <div className="flex-1">
-             <h3 className="text-2xl font-orbitron mb-4 text-cyber-danger flex items-center gap-3">
-               <Sliders className="w-6 h-6" /> TURN THE DIAL
-             </h3>
-             <p className="text-gray-400 font-mono leading-relaxed">
-               Neutral ←────────────→ Extreme. Slide it slowly. Notice when facts stop mattering and emotions take control.
-             </p>
-           </div>
-           <div className="flex-1 font-mono text-xs text-gray-600 border border-gray-800 p-4 rounded bg-black">
-              That point? <br/>
-              That’s where manipulation begins.
-           </div>
-        </div>
-      </Section>
-
-      {/* --- FINAL CTA --- */}
-      <div className="min-h-[80vh] flex flex-col justify-center items-center relative z-10 pb-20">
-        <h2 className="text-2xl md:text-3xl font-mono text-gray-500 mb-8 uppercase tracking-widest text-center px-6">
-          You are already inside the system.
-        </h2>
-        
-        <p className="text-white mb-16 text-lg text-center max-w-lg px-6">
-          Reality Distortion Simulator doesn’t tell you what to believe. <br/>
-          <span className="text-cyber-neon font-bold">It shows you how belief is manufactured.</span>
-        </p>
-
+      {state === 'idle' && (
         <button 
-          onClick={onEnter}
-          className="group relative inline-flex items-center gap-6 px-16 py-8 bg-transparent border border-cyber-neon text-cyber-neon font-orbitron text-xl font-bold tracking-[0.3em] uppercase transition-all hover:bg-cyber-neon hover:text-black overflow-hidden"
+          onClick={startTest}
+          className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-neutral-200 transition-colors"
         >
-          <span className="relative z-10 flex items-center gap-4">
-             [ ENTER REALITY ] <ArrowRight className="w-6 h-6" />
-          </span>
-          
-          {/* Glitch Overlay */}
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-          
-          {/* Button Glow */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 shadow-[0_0_50px_rgba(0,243,255,0.5)] transition-opacity duration-300 pointer-events-none"></div>
+          Test Your Reflexes
         </button>
-        
-        <div className="mt-12 flex flex-col items-center gap-2 opacity-50">
-           <p className="font-mono text-[10px] uppercase">Break the narrative</p>
-           <p className="font-mono text-[10px] uppercase">See clearly — or don’t</p>
-        </div>
-      </div>
+      )}
 
+      {state === 'waiting' && (
+        <div 
+          onMouseDown={handleClick}
+          className="w-full h-32 flex items-center justify-center bg-neutral-800 cursor-pointer animate-pulse"
+        >
+          <span className="text-neutral-500 uppercase tracking-widest">Wait for Green...</span>
+        </div>
+      )}
+
+      {state === 'ready' && (
+        <div 
+          onMouseDown={handleClick}
+          className="w-full h-32 flex items-center justify-center bg-red-600 cursor-pointer"
+        >
+          <span className="text-white font-bold uppercase tracking-widest text-xl">CLICK NOW!</span>
+        </div>
+      )}
+
+      {state === 'done' && (
+        <div className="space-y-4">
+          <div className="text-5xl font-mono text-white">{result}ms</div>
+          <p className="text-neutral-400 text-sm max-w-md mx-auto">
+             Emotional processing takes ~200ms. Rational thought takes ~500ms+. 
+             <br/><span className="text-red-500">You reacted before you could fully think.</span>
+          </p>
+          <button onClick={() => setState('idle')} className="text-xs text-neutral-500 underline mt-4 hover:text-white">Try Again</button>
+        </div>
+      )}
     </div>
   );
-}
+};
 
+const FramingToggle = () => {
+  const [mode, setMode] = useState('neutral');
 
-// --- MAIN SIMULATOR APP ---
-export default function Home() {
-  const [hasEntered, setHasEntered] = useState(false);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState(null);
-  const [intensity, setIntensity] = useState(50);
-  const [chaosMode, setChaosMode] = useState(false);
-  const [realityIQ, setRealityIQ] = useState(false);
-  const [revealed, setRevealed] = useState({});
-
-  const handleSimulate = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    setIsLoading(true);
-    setData(null);
-    setRevealed({});
-    const result = await generateRealities(input, intensity, chaosMode);
-    setData(result);
-    setIsLoading(false);
+  const content = {
+    neutral: { text: "The company announced a 10% workforce reduction.", color: "text-neutral-400" },
+    alarmist: { text: "Corporate bloodbath: Thousands slashed as crisis deepens.", color: "text-red-500" },
+    corporate: { text: "We are optimizing our talent synergy for future agility.", color: "text-blue-400" },
   };
 
-  const handleReveal = (id) => {
-    if (realityIQ) setRevealed(prev => ({ ...prev, [id]: true }));
-  };
-
-  if (!hasEntered) {
-    return <LandingPage onEnter={() => setHasEntered(true)} />;
-  }
-
-  // --- SIMULATOR RENDER ---
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      transition={{ duration: 1 }}
-      className="min-h-screen bg-cyber-black text-foreground scanlines p-6 md:p-12 relative overflow-x-hidden"
-    >
-      <AnimatePresence>
-        {isLoading && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
+    <div className="border border-neutral-800 bg-black p-6 my-12">
+       <div className="flex justify-center gap-4 mb-8 border-b border-neutral-900 pb-4">
+          {['neutral', 'alarmist', 'corporate'].map((m) => (
+             <button 
+                key={m}
+                onClick={() => setMode(m)}
+                className={`text-[10px] uppercase tracking-widest px-3 py-1 transition-all ${mode === m ? 'bg-white text-black' : 'text-neutral-600 hover:text-white'}`}
+             >
+                {m}
+             </button>
+          ))}
+       </div>
+       <div className="h-32 flex items-center justify-center text-center px-4">
+          <motion.p 
+            key={mode}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`text-xl md:text-2xl font-serif ${content[mode].color}`}
           >
-            <div className="text-center space-y-8">
-              <div className="relative w-32 h-32 mx-auto">
-                <div className="absolute inset-0 border-t-4 border-cyber-neon rounded-full animate-spin shadow-[0_0_20px_var(--color-cyber-neon)]" />
-                <div className="absolute inset-4 border-r-4 border-cyber-purple rounded-full animate-spin [animation-direction:reverse]" />
-              </div>
-              <p className="text-cyber-neon font-mono text-xl tracking-[0.3em] animate-pulse">FRACTURING REALITY...</p>
+             "{content[mode].text}"
+          </motion.p>
+       </div>
+       <p className="text-center text-[10px] text-neutral-600 mt-4 uppercase">The fact (10% cut) remained constant.</p>
+    </div>
+  );
+};
+
+const TextXRay = () => {
+  return (
+    <div className="my-12 p-8 border border-neutral-800 bg-neutral-900/10 text-center cursor-help group">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-6 flex items-center justify-center gap-2">
+         <Eye className="w-4 h-4" /> Hover to Reveal Bias
+      </h3>
+      <p className="text-xl md:text-2xl text-neutral-300 leading-relaxed font-serif">
+        "The <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors">
+          controversial
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">
+             Implies guilt
+          </span>
+        </span> decision sparked 
+        <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">
+           outrage
+           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">
+             Emotional Scale
+           </span>
+        </span>
+        among the 
+        <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">
+           vulnerable
+           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">
+             Victim Frame
+           </span>
+        </span>
+        population."
+      </p>
+    </div>
+  );
+};
+
+// --- STYLING COMPONENTS ---
+
+const Section = ({ children, className = "" }) => (
+  <motion.section 
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+    variants={fadeUp}
+    className={`max-w-3xl mx-auto py-24 px-6 md:px-0 ${className}`}
+  >
+    {children}
+  </motion.section>
+);
+
+const Highlight = ({ children }) => (
+  <span className="text-white font-bold">{children}</span>
+);
+
+const Divider = () => (
+  <div className="w-px h-16 bg-gradient-to-b from-transparent via-neutral-800 to-transparent mx-auto my-16 opacity-50" />
+);
+
+const QuoteBlock = ({ text, author, context }) => (
+  <div className="my-16 text-center space-y-6 px-4 md:px-12 border-l-2 border-red-900/50 bg-neutral-900/10 py-12">
+    <Quote className="w-8 h-8 text-red-700 mx-auto opacity-50 mb-4" />
+    <p className="text-xl md:text-3xl text-white font-serif italic leading-relaxed">"{text}"</p>
+    <div className="text-sm font-mono text-neutral-500 uppercase tracking-widest">
+      — {author}
+      {context && <span className="block text-[10px] opacity-60 mt-1 lowercase normal-case">({context})</span>}
+    </div>
+  </div>
+);
+
+const FactBox = ({ title, children }) => (
+  <div className="border border-neutral-800 bg-neutral-900/20 p-8 my-8 relative overflow-hidden group">
+    <div className="absolute top-0 left-0 w-1 h-full bg-neutral-700 group-hover:bg-white transition-colors duration-500" />
+    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-4">{title}</h3>
+    <div className="text-lg md:text-xl text-neutral-300 space-y-4">
+      {children}
+    </div>
+  </div>
+);
+
+// --- MAIN PAGE ---
+
+export default function Homepage() {
+  const router = useRouter();
+  const [showNav, setShowNav] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowNav(true), 6000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <main className="bg-black min-h-screen text-neutral-500 font-mono selection:bg-red-900 selection:text-white overflow-x-hidden">
+      
+      {/* FIXED NAVIGATION */}
+      <motion.nav 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showNav ? 1 : 0 }}
+        transition={{ duration: 1 }}
+        className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none"
+      >
+        <span className="text-[10px] uppercase tracking-widest text-neutral-700">RDS // v2.0</span>
+        <button 
+          onClick={() => router.push('/about')}
+          className="pointer-events-auto px-6 py-3 border border-neutral-900 bg-black hover:border-neutral-600 text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-all duration-300"
+        >
+          [ About ]
+        </button>
+      </motion.nav>
+
+      {/* 1. CINEMATIC INTRO */}
+      <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative z-10">
+        <div className="max-w-4xl space-y-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 4, times: [0, 0.2, 0.8, 1] }}
+            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+          >
+            <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-white">Truth is Optional.</h1>
+            <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-red-600 mt-2">Perception is Programmable.</h1>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2, delay: 5.5 }}
+            className="space-y-8"
+          >
+            <p className="text-xl md:text-2xl text-white">Information does not arrive neutral.</p>
+            <p className="text-lg text-neutral-400">
+              By the time you read a sentence,<br />
+              <Highlight>your brain has already decided how to feel about it.</Highlight>
+            </p>
+            <div className="flex flex-col gap-2 text-sm uppercase tracking-widest text-neutral-600 pt-8">
+               <span>This happens before logic.</span>
+               <span>This happens before reasoning.</span>
+               <span className="text-red-500">This happens before awareness.</span>
+            </div>
+            
+            <div className="pt-24 opacity-50">
+               <span className="text-[10px] animate-pulse uppercase tracking-widest">This website exists inside that moment</span>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      </section>
 
-      <div className="max-w-5xl mx-auto relative z-10">
-        <header className="flex justify-between items-center mb-12 border-b border-white/10 pb-6">
-          <div className="flex items-center gap-4">
-             <div className="w-10 h-10 border border-cyber-neon rounded-full flex items-center justify-center animate-pulse-slow">
-                <Eye className="w-5 h-5 text-cyber-neon" />
-             </div>
-             <div>
-               <h1 className="font-orbitron font-bold text-xl tracking-wider text-white">REALITY SIM</h1>
-               <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">v2.5 // Online</p>
-             </div>
+      {/* 2. A MEASURABLE FACT */}
+      <Section>
+        <FactBox title="A Measurable Fact">
+          <p>Studies in cognitive psychology show that emotional response precedes rational evaluation by <Highlight>milliseconds</Highlight>.</p>
+          <p className="text-sm uppercase tracking-widest text-neutral-500">Not seconds. Milliseconds.</p>
+          <p>That is enough to bias judgment. Enough to anchor belief. Enough to shape memory.</p>
+          <p className="text-white mt-4">You are not slow. Your brain is fast.</p>
+        </FactBox>
+        
+        {/* INTERACTION 1: REACTION SPEED */}
+        <ReactionTest />
+      </Section>
+
+      {/* 3. FRAMING EXPLANATION */}
+      <Section className="space-y-6">
+        <h2 className="text-white text-2xl uppercase tracking-tighter">Another Fact</h2>
+        <p className="text-lg">The same factual statement, when framed differently, can produce:</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm uppercase tracking-wider text-neutral-400 my-8">
+          <div className="p-3 border border-neutral-800 text-center">Fear</div>
+          <div className="p-3 border border-neutral-800 text-center">Confidence</div>
+          <div className="p-3 border border-neutral-800 text-center">Anger</div>
+          <div className="p-3 border border-neutral-800 text-center">Compliance</div>
+          <div className="p-3 border border-neutral-800 text-center text-white border-white">Trust</div>
+        </div>
+        <p>Without changing a single data point.</p>
+        <p>This is not theory. <Highlight>This is framing.</Highlight></p>
+        
+        {/* INTERACTION 2: FRAMING TOGGLE */}
+        <FramingToggle />
+      </Section>
+
+      {/* 4. QUOTE 1 */}
+      <Section>
+        <QuoteBlock 
+          text="We do not see things as they are. We see them as we are."
+          author="Anaïs Nin"
+        />
+      </Section>
+
+      {/* 5. HOW IT PERSUADES */}
+      <Section>
+        <h2 className="text-2xl text-white mb-8">How Information Actually Persuades</h2>
+        <p className="mb-6">Most persuasion does not work by convincing you. It works by:</p>
+        <ul className="space-y-4 border-l border-neutral-800 pl-6 mb-8">
+          <li>Selecting which detail appears first</li>
+          <li>Repeating certain words</li>
+          <li>Attaching emotional adjectives</li>
+          <li>Implying urgency or authority</li>
+        </ul>
+        
+        {/* INTERACTION 3: TEXT X-RAY */}
+        <TextXRay />
+
+        <p className="text-lg text-white">
+          By the time you ask “Is this true?”, your nervous system has already reacted. <br/>
+          <span className="text-red-500">Truth arrives late.</span>
+        </p>
+      </Section>
+
+      {/* 6. DOCUMENTED REALITY */}
+      <Section>
+        <FactBox title="Documented Reality">
+          <ul className="space-y-2 list-disc pl-4 text-neutral-400 text-base">
+            <li>Framing effects alter decision-making</li>
+            <li>Emotional language increases belief retention</li>
+            <li>Authority tone increases compliance</li>
+            <li>Repetition increases perceived truth</li>
+          </ul>
+          <p className="mt-6 text-white">None of these require false information. Only presentation.</p>
+        </FactBox>
+      </Section>
+
+      {/* 7. QUOTE 2 */}
+      <Section>
+        <QuoteBlock 
+          text="A lie can travel halfway around the world while the truth is putting on its shoes."
+          author="Attributed to Mark Twain"
+          context="Ironically, the attribution itself is disputed. Even the quote about misinformation is framed."
+        />
+      </Section>
+
+      <Divider />
+
+      {/* 8. WHAT THIS IS */}
+      <Section className="text-center">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-6">What This Website Is</h2>
+        <p className="text-xl mb-4">
+          Reality Distortion Simulator is not a news site. <br/>
+          It is not a fact-checker. <br/>
+          It is not a detector.
+        </p>
+        <p className="text-2xl text-white border-y border-neutral-800 py-8 my-8">
+          It is a simulation of perception.
+        </p>
+        <p>It shows how the same fact can create multiple psychological realities.</p>
+      </Section>
+
+      {/* 9. INPUT & PROCESS */}
+      <Section>
+        <div className="grid md:grid-cols-2 gap-12">
+          <div>
+            <h3 className="text-white uppercase text-sm mb-4">What You Bring</h3>
+            <p className="mb-4">You bring a headline, a statistic, a factual claim. Something ordinary. Something believable.</p>
+            <div className="bg-neutral-900 p-4 font-mono text-sm text-neutral-300 border-l-2 border-white italic">
+              “Fuel prices increased by 5% this month.”
+            </div>
+            <p className="mt-2 text-xs text-neutral-600">Nothing emotional. Just information.</p>
           </div>
-          <button 
-            onClick={() => setHasEntered(false)}
-            className="text-xs font-mono text-gray-500 hover:text-cyber-danger transition-colors uppercase tracking-widest"
-          >
-            [ Exit Simulation ]
-          </button>
-        </header>
+          <div>
+            <h3 className="text-white uppercase text-sm mb-4">What The System Does</h3>
+            <p className="mb-4">First, it removes emotional language.</p>
+            <p className="mb-4 text-white">What remains is a neutral reality. Flat. Unconvincing. Quiet.</p>
+            <p>Then the same fact is reconstructed. Not changed. <Highlight>Reframed.</Highlight></p>
+          </div>
+        </div>
+      </Section>
 
-        <section className="bg-cyber-dark/40 border border-white/5 p-8 rounded-2xl backdrop-blur-sm mb-12 shadow-2xl">
-          <form onSubmit={handleSimulate} className="space-y-10">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyber-neon via-cyber-purple to-cyber-neon rounded-lg blur opacity-20 group-hover:opacity-75 transition duration-500 group-hover:duration-200"></div>
-              <div className="relative bg-black rounded-lg p-1 ring-1 ring-white/10">
-                <div className="flex items-center bg-cyber-dark/80 rounded-md px-4 py-4">
-                  <span className="text-cyber-neon font-mono mr-4 text-xl animate-pulse">{'>'}</span>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Enter a fact to distort..."
-                    className="w-full bg-transparent text-xl font-mono text-white placeholder-gray-600 focus:outline-none"
-                    autoComplete="off"
-                  />
-                </div>
-              </div>
-            </div>
+      {/* 10. PARALLEL VERSIONS */}
+      <Section>
+        <h2 className="text-2xl text-white mb-8">Parallel Versions Appear</h2>
+        <p className="mb-8">The same information becomes:</p>
+        <div className="space-y-2 text-lg text-white font-bold uppercase opacity-80">
+          <p className="hover:text-red-500 transition-colors cursor-default">A Threat</p>
+          <p className="hover:text-green-500 transition-colors cursor-default">A Reassurance</p>
+          <p className="hover:text-blue-500 transition-colors cursor-default">A Political Argument</p>
+          <p className="hover:text-yellow-500 transition-colors cursor-default">A Corporate Justification</p>
+          <p className="hover:text-purple-500 transition-colors cursor-default">An Emotional Trigger</p>
+        </div>
+        <p className="mt-8 text-neutral-400">
+          All of them are “true”. All of them feel different.
+        </p>
+      </Section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-end">
-              <div className="space-y-4">
-                <div className="flex justify-between text-xs font-mono text-gray-400 uppercase tracking-widest">
-                  <span>Distortion Intensity</span>
-                  <span className="text-cyber-neon">{intensity}%</span>
-                </div>
-                <div className="relative h-2 bg-gray-800 rounded-full">
-                  <div 
-                    className="absolute h-full bg-gradient-to-r from-cyber-neon to-cyber-purple rounded-full shadow-[0_0_10px_var(--color-cyber-neon)]" 
-                    style={{ width: `${intensity}%` }} 
-                  />
-                  <input 
-                    type="range" min="0" max="100" value={intensity} 
-                    onChange={(e) => setIntensity(Number(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </div>
-              </div>
+      {/* 11. QUOTE 3 */}
+      <Section>
+        <QuoteBlock 
+          text="People don’t believe what is true. They believe what feels true."
+          author="Cognitive Bias Research Summary"
+        />
+      </Section>
 
-              <div className="flex gap-4 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setChaosMode(!chaosMode)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-lg border font-mono text-xs uppercase transition-all duration-300
-                    ${chaosMode 
-                      ? 'border-cyber-danger text-cyber-danger bg-cyber-danger/10 shadow-[0_0_15px_rgba(255,0,60,0.3)]' 
-                      : 'border-white/10 text-gray-500 hover:border-cyber-danger/50 hover:text-cyber-danger'}`}
-                >
-                  <Zap size={16} className={chaosMode ? "fill-current" : ""} /> Chaos Mode
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRealityIQ(!realityIQ)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-lg border font-mono text-xs uppercase transition-all duration-300
-                    ${realityIQ 
-                      ? 'border-cyber-purple text-cyber-purple bg-cyber-purple/10 shadow-[0_0_15px_rgba(189,0,255,0.3)]' 
-                      : 'border-white/10 text-gray-500 hover:border-cyber-purple/50 hover:text-cyber-purple'}`}
-                >
-                  <Sliders size={16} /> Reality IQ
-                </button>
-              </div>
-            </div>
+      {/* 12. THE DANGEROUS PART */}
+      <Section className="border-l-4 border-red-900 pl-8 py-2">
+        <h2 className="text-red-500 uppercase tracking-widest text-sm mb-4">The Dangerous Part</h2>
+        <p className="text-2xl text-white mb-6">One version will feel obvious.</p>
+        <p className="mb-6">Not because it is more accurate. Because it matches:</p>
+        <ul className="text-neutral-300 space-y-2 mb-6">
+          <li>Your fears</li>
+          <li>Your hopes</li>
+          <li>Your identity</li>
+          <li>Your expectations</li>
+        </ul>
+        <p>That reaction is automatic. This website does not shame it. <Highlight>It exposes it.</Highlight></p>
+      </Section>
 
-            <button
-              type="submit"
-              disabled={isLoading || !input}
-              className="group relative w-full overflow-hidden rounded-lg bg-cyber-gray p-4 transition-all hover:bg-cyber-gray/80 disabled:opacity-50"
+      {/* 13. MOTIVATED REASONING */}
+      <Section>
+        <FactBox title="Another Fact">
+          <p>Once a belief is emotionally accepted, contradictory evidence is processed more critically than supportive evidence.</p>
+          <p className="mt-4 text-white">This is called motivated reasoning.</p>
+          <p>Your brain defends what it already feels.</p>
+        </FactBox>
+      </Section>
+
+      {/* 14. QUOTE 4 */}
+      <Section>
+        <QuoteBlock 
+          text="It is difficult to get a man to understand something when his salary depends on his not understanding it."
+          author="Upton Sinclair"
+          context="Replace 'salary' with: ideology, identity, belonging. The mechanism remains."
+        />
+      </Section>
+
+      {/* 15. TRANSFORMATION */}
+      <Section>
+        <h2 className="text-2xl text-white mb-8">What Starts to Change</h2>
+        <div className="grid md:grid-cols-2 gap-8">
+           <div className="space-y-4">
+              <p>You notice adjectives before facts.</p>
+              <p>You notice urgency before evidence.</p>
+              <p>You notice authority before logic.</p>
+           </div>
+           <div className="space-y-4 text-white">
+              <p>You reread sentences.</p>
+              <p>You hesitate.</p>
+              <p>You feel certainty forming — and interrupt it.</p>
+           </div>
+        </div>
+        <p className="mt-8 text-center text-sm uppercase tracking-widest border border-neutral-800 p-4">
+          That interruption is not weakness. It is awareness.
+        </p>
+      </Section>
+
+      {/* 16. NOT COMFORTING */}
+      <Section className="text-center max-w-xl">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-6">This Is Not Comforting</h2>
+        <p className="mb-4">This does not make you immune. No one is immune.</p>
+        <p className="mb-8">It only makes the manipulation visible. Visibility does not remove influence. It slows it.</p>
+        <p className="text-white text-lg">Sometimes, slowing is the only defense.</p>
+      </Section>
+
+      {/* 17. QUOTE 5 */}
+      <Section>
+        <QuoteBlock 
+          text="The most effective propaganda is not what is said, but what is taken for granted."
+          author="Media Theory Principle"
+        />
+      </Section>
+
+      <Divider />
+
+      {/* 18. NOT / WARNING */}
+      <Section>
+        <div className="grid md:grid-cols-2 gap-16">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-4">What This Is Not</h3>
+            <ul className="space-y-2 text-neutral-400">
+              <li>❌ Not fake news</li>
+              <li>❌ Not propaganda</li>
+              <li>❌ Not opinion</li>
+            </ul>
+            <p className="mt-4 text-white">This is structural analysis.</p>
+            <p>It examines how meaning is constructed, not what meaning should be.</p>
+          </div>
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-red-500 mb-4">A Quiet Warning</h3>
+            <p className="mb-4">Once you learn to see framing, you will notice it everywhere. News. Politics. Marketing. Conversations.</p>
+            <p className="text-white">You will not be able to turn it off.</p>
+          </div>
+        </div>
+      </Section>
+
+      {/* 19. CTA */}
+      <section className="py-40 px-6 flex flex-col items-center justify-center bg-black border-t border-neutral-900 relative overflow-hidden">
+        {/* Subtle Background Glow */}
+        <div className="absolute inset-0 bg-red-900/5 blur-[150px]" />
+
+        <div className="relative z-10 text-center max-w-2xl space-y-12">
+          <div className="space-y-4">
+             <h2 className="text-3xl text-white uppercase tracking-tighter">If You Continue</h2>
+             <p className="text-lg text-neutral-400">Paste a fact. Watch it fracture. Notice which version reaches you first.</p>
+             <p className="text-white font-bold">Then ask yourself why.</p>
+          </div>
+
+          <div>
+            <button 
+              onClick={() => router.push('/simulator')}
+              className="group relative inline-flex items-center justify-center px-12 py-5 text-sm font-bold text-black transition-all duration-300 bg-white hover:bg-red-600 hover:text-white uppercase tracking-[0.2em]"
             >
-              <div className="absolute inset-0 w-0 bg-cyber-neon transition-all duration-[250ms] ease-out group-hover:w-full opacity-10"></div>
-              <div className="relative flex items-center justify-center gap-3 text-cyber-neon font-bold tracking-[0.25em] uppercase group-hover:text-white">
-                 <Play size={18} fill="currentColor" /> INITIATE
-              </div>
+              Enter the Simulator
+              <ArrowRight className="ml-3 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-          </form>
-        </section>
+          </div>
 
-        <AnimatePresence>
-          {data && (
-            <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
-              <RealityCard data={data.neutral} hidden={realityIQ && !revealed['neutral']} onReveal={() => handleReveal('neutral')} />
-              {data.distortions.map((card) => (
-                <RealityCard 
-                  key={card.id} 
-                  data={card} 
-                  hidden={realityIQ && !revealed[card.id]} 
-                  onReveal={() => handleReveal(card.id)} 
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
+          <div className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity space-y-2">
+            <p>Understanding framing doesn’t make you safe.</p>
+            <p className="text-red-500">It makes you responsible.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
   );
 }

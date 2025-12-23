@@ -1,272 +1,296 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Fingerprint, BrainCircuit, Eye, Terminal } from 'lucide-react';
-import GlitchText from '@/components/GlitchText'; // Assumes you have this from previous steps
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { motion, useScroll, useTransform, useVelocity, useReducedMotion, useMotionValueEvent } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 
-// Reusable Section Component for scroll reveals
-const Reveal = ({ children, className = "", delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-10%" }}
-    transition={{ duration: 0.8, delay, ease: "easeOut" }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+// --- 1. CONFIGURATION ---
 
-export default function About() {
+const SCRIPT = [
+  { id: 0, range: [0, 0.03], text: "", type: "silence" }, 
+  { id: 1, range: [0.03, 0.08], text: "You came here looking for answers.", type: "familiarity" },
+  { id: 2, range: [0.08, 0.13], text: "But answers are rarely neutral.", type: "doubt" },
+  { id: 3, range: [0.13, 0.18], text: ["It arrives with tone.", "With emphasis.", "With intent."], type: "awareness" },
+  { id: 4, range: [0.18, 0.23], text: "Wait. Did that change?", type: "gaslight" }, 
+  { id: 5, range: [0.23, 0.30], text: "WHAT THIS WEBSITE IS", type: "grounding" },
+  { id: 6, range: [0.30, 0.35], text: ["Facts don't usually deceive you.", "PRESENTATION DOES."], type: "realization" },
+  { id: 7, range: [0.35, 0.43], text: ["Bias", "Urgency", "Framing", "Control"], type: "overload" },
+  { id: 8, range: [0.43, 0.50], text: ["Designed", "To", "Shape", "You"], type: "pattern" },
+  { id: 9, range: [0.50, 0.56], text: "This isn't centered.", type: "engagement" },
+  { id: 10, range: [0.56, 0.61], text: "THIS IS NEUTRAL REALITY.", type: "neutral" }, 
+  { id: 11, range: [0.61, 0.66], text: "Then the truth fractures.", type: "fracture" },
+  { id: 12, range: [0.66, 0.72], text: ["Fear Reality", "Optimistic Reality", "Cynical Reality", "Corporate Reality"], type: "dissonance" },
+  { id: 13, range: [0.72, 0.76], text: "This is where it gets uncomfortable.", type: "discomfort" },
+  { id: 14, range: [0.76, 0.81], text: "Why does this one feel true to you?", type: "introspection" },
+  { id: 15, range: [0.81, 0.86], text: "Awareness is irreversible.", type: "mirror" }, 
+  { id: 16, range: [0.86, 0.90], text: "SOME PEOPLE GET MAD HERE.", type: "confrontation" },
+  { id: 17, range: [0.90, 0.94], text: "This is not a comfort tool.", type: "authority" },
+  { id: 18, range: [0.94, 0.98], text: "It is a mirror.", type: "resolution" },
+  { id: 19, range: [0.98, 1.0], text: "ENTER THE SIMULATOR", type: "cta" },
+];
+
+// --- 2. SCENE COMPONENTS ---
+
+const SceneSilence = ({ progress }) => {
+  const opacity = useTransform(progress, [0, 1], [0, 0.08]);
   return (
-    <div className="min-h-screen bg-black text-gray-300 selection:bg-cyber-danger selection:text-black font-sans overflow-x-hidden">
-      
-      {/* Background Textures */}
-      <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
+    <motion.div style={{ opacity }} className="fixed inset-0 pointer-events-none z-0 mix-blend-overlay">
+       <div className="w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-50" />
+    </motion.div>
+  );
+};
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 p-6 z-50">
-        <Link href="/" className="group flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-500 hover:text-cyber-neon transition-colors">
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Return to Simulation
-        </Link>
-      </nav>
+const SceneGaslight = ({ progress, scrollVelocity }) => {
+    const [text, setText] = useState("Wait. Did that change?");
+    const [hasChanged, setHasChanged] = useState(false);
+    const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
-      <div className="max-w-4xl mx-auto px-6 py-24 relative z-10">
-        
-        {/* --- HERO: THE WARNING --- */}
-        <header className="mb-32 pt-12">
-          <Reveal>
-            <h1 className="text-6xl md:text-9xl font-bold font-orbitron text-white opacity-10 mb-4 select-none">
-              ABOUT
-            </h1>
-            <div className="border-l-2 border-cyber-danger pl-6 md:pl-10">
-              <h2 className="text-2xl md:text-4xl font-bold text-white mb-6 leading-tight">
-                This may upset you. <br />
-                <span className="text-cyber-danger">That’s the point.</span>
-              </h2>
-              <p className="font-mono text-gray-400 text-sm md:text-base max-w-lg">
-                You came here expecting clarity. <br/>
-                You might leave with doubt. <br/>
-                <br/>
-                Reality Distortion Simulator isn’t built to comfort you. <br/>
-                It’s built to <span className="text-white border-b border-white">interrupt you.</span>
-              </p>
-            </div>
-          </Reveal>
-        </header>
+    useEffect(() => {
+        return scrollVelocity.on("change", (latest) => {
+            if (latest < -500 && !hasChanged) {
+                setText("Wait. Was it always like this?");
+                setHasChanged(true);
+            }
+        });
+    }, [scrollVelocity, hasChanged]);
 
-        {/* --- SECTION 1: THE MECHANISM --- */}
-        <section className="mb-32 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <Reveal>
-            <div className="relative">
-               <div className="absolute -inset-4 bg-cyber-neon/10 blur-xl rounded-full"></div>
-               <BrainCircuit className="w-24 h-24 text-cyber-neon relative z-10" />
-            </div>
-            <h3 className="text-3xl font-orbitron text-white mt-8 mb-4">
-              This App Doesn’t Lie.
-            </h3>
-            <p className="font-mono text-gray-400 leading-relaxed">
-              It shows you how easily <span className="text-cyber-neon">you lie to yourself</span> — when the framing feels right.
-            </p>
-          </Reveal>
+    return (
+        <motion.h2 
+            style={{ opacity }} 
+            className="text-3xl md:text-5xl font-light text-neutral-300 transition-all duration-1000"
+        >
+            {text}
+        </motion.h2>
+    );
+};
 
-          <Reveal delay={0.2} className="border border-white/10 bg-white/5 p-8 rounded-xl backdrop-blur-sm">
-            <ul className="space-y-6 font-mono text-sm">
-              <li className="flex items-center justify-between border-b border-white/5 pb-2">
-                <span>Same Facts</span>
-                <span className="text-gray-600">→</span>
-                <span className="text-white">Different Emotions</span>
-              </li>
-              <li className="flex items-center justify-between border-b border-white/5 pb-2">
-                <span>Same Event</span>
-                <span className="text-gray-600">→</span>
-                <span className="text-white">Contradictory Convictions</span>
-              </li>
-              <li className="text-center pt-2 text-cyber-danger uppercase tracking-widest text-xs">
-                All Valid. All Convincing. All Dangerous.
-              </li>
-            </ul>
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 2: THE MIRROR --- */}
-        <section className="mb-32 text-center">
-          <Reveal>
-            <Fingerprint className="w-12 h-12 text-gray-600 mx-auto mb-6" />
-            <h3 className="text-2xl md:text-4xl font-bold mb-8">
-              You think you want the truth.
-            </h3>
-            <p className="text-xl font-light text-gray-400 max-w-2xl mx-auto mb-12">
-              What you actually want is the version that <span className="text-white font-bold">agrees with you.</span>
-            </p>
-            
-            <div className="inline-block border border-cyber-danger text-cyber-danger font-mono text-xs px-4 py-2 uppercase tracking-[0.2em] animate-pulse">
-              This app removes that privilege.
-            </div>
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 3: THE FRACTURE PROCESS --- */}
-        <section className="mb-32">
-          <div className="flex items-center gap-4 mb-12 opacity-50">
-            <Terminal className="w-5 h-5" />
-            <span className="font-mono text-xs uppercase tracking-widest">System Diagnostic</span>
-          </div>
-
-          <div className="space-y-12 border-l border-white/10 pl-8 relative">
-            <Reveal>
-              <h4 className="text-white font-bold mb-2">01. INPUT</h4>
-              <p className="font-mono text-sm text-gray-500">You input a fact. A clean one. Harmless.</p>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <h4 className="text-cyber-neon font-bold mb-2">02. FRACTURE</h4>
-              <p className="font-mono text-sm text-gray-500 mb-4">Then it splits:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                <div className="p-3 bg-red-900/10 border border-red-900/30 text-red-400">Fear makes it urgent.</div>
-                <div className="p-3 bg-green-900/10 border border-green-900/30 text-green-400">Optimism makes it harmless.</div>
-                <div className="p-3 bg-purple-900/10 border border-purple-900/30 text-purple-400">Authority makes it unquestionable.</div>
-                <div className="p-3 bg-blue-900/10 border border-blue-900/30 text-blue-400">Emotion makes it unforgettable.</div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.2}>
-              <h4 className="text-white font-bold mb-2">03. RESULT</h4>
-              <p className="font-mono text-sm text-gray-500">Nothing changed. <span className="text-white">Except you.</span></p>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* --- SECTION 4: THE UNCOMFORTABLE TRUTH --- */}
-        <section className="mb-32 bg-cyber-dark/40 p-8 md:p-12 rounded-2xl border border-white/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-20">
-            <AlertTriangle className="w-24 h-24 text-cyber-danger" />
-          </div>
-
-          <Reveal>
-            <h3 className="text-3xl font-orbitron text-white mb-6">
-              This is where people get uncomfortable.
-            </h3>
-            <div className="space-y-6 font-mono text-sm md:text-base leading-relaxed text-gray-300">
-              <p>
-                Because the app doesn’t tell you: <br/>
-                <span className="text-green-400">“This source is biased.”</span>
-              </p>
-              <p>
-                It shows you: <br/>
-                <span className="text-red-500 border-b border-red-500">“You are persuadable.”</span>
-              </p>
-              <p className="text-gray-500 italic">And that realization stings.</p>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 5: THE WHISPER --- */}
-        <section className="mb-32 max-w-2xl mx-auto text-center">
-          <Reveal>
-            <h3 className="text-xl font-bold uppercase tracking-widest text-gray-600 mb-8">
-              Bias doesn't announce itself.
-            </h3>
-            
-            <div className="space-y-4 font-serif text-2xl md:text-3xl italic text-gray-400">
-              <p className="opacity-40">It whispers.</p>
-              <p className="opacity-60">It reassures.</p>
-              <p className="opacity-80">It uses your language.</p>
-              <p className="text-white">Your fears.</p>
-              <p className="text-white">Your hopes.</p>
-            </div>
-
-            <p className="mt-12 font-mono text-xs text-cyber-danger">
-              By the time you notice it, you’re already defending it.
-            </p>
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 6: THE ANGER --- */}
-        <section className="mb-32 grid grid-cols-1 md:grid-cols-2 gap-12">
-          <Reveal>
-            <h3 className="text-4xl font-orbitron font-bold mb-4">
-              Some users get angry.
-            </h3>
-            <p className="font-mono text-gray-400 mb-4">
-              Not at the app. At themselves.
-            </p>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Because once you see how tone bends meaning, how emotion overrides logic, and how framing manufactures certainty... <br/>
-              <span className="text-white font-bold">You can’t unsee it.</span>
-            </p>
-          </Reveal>
-          <Reveal delay={0.2} className="flex flex-col justify-center gap-4 text-sm font-mono text-gray-400 border-l border-white/10 pl-6">
-            <p>News becomes suspicious.</p>
-            <p>Certainty feels fake.</p>
-            <p>Confidence looks rehearsed.</p>
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 7: SAFE SPACE --- */}
-        <section className="mb-32 text-center py-20 border-y border-white/5">
-           <Reveal>
-             <h3 className="text-sm font-mono uppercase tracking-[0.5em] text-gray-600 mb-4">
-               Safety Protocol: Disabled
-             </h3>
-             <GlitchText text="THIS IS NOT A SAFE SPACE" className="text-3xl md:text-5xl font-bold font-orbitron text-white mb-8" />
-             <p className="text-xl text-gray-300 font-light">It’s an <span className="text-cyber-neon">honest</span> one.</p>
-             
-             <div className="flex flex-wrap justify-center gap-4 mt-8 opacity-60">
-               <span className="px-3 py-1 border border-gray-700 rounded-full text-xs text-gray-500 line-through">No content warnings</span>
-               <span className="px-3 py-1 border border-gray-700 rounded-full text-xs text-gray-500 line-through">No moral guidance</span>
-               <span className="px-3 py-1 border border-gray-700 rounded-full text-xs text-gray-500 line-through">No correct interpretation</span>
-             </div>
-           </Reveal>
-        </section>
-
-        {/* --- SECTION 8: FINAL MANIFESTO --- */}
-        <section className="mb-24">
-          <Reveal>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-colors">
-                <h4 className="text-cyber-neon font-bold mb-2">IF IT MAKES YOU UNCOMFORTABLE</h4>
-                <p className="text-sm text-gray-400">Good. Discomfort means the illusion cracked.</p>
-              </div>
-              <div className="p-6 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-colors">
-                <h4 className="text-cyber-danger font-bold mb-2">IF IT MAKES YOU ANGRY</h4>
-                <p className="text-sm text-gray-400">Better. Anger means something you trusted didn’t survive scrutiny.</p>
-              </div>
-              <div className="p-6 bg-white/5 rounded-lg border border-white/5 hover:border-white/20 transition-colors">
-                <h4 className="text-cyber-purple font-bold mb-2">IF YOU QUESTION EVERYTHING</h4>
-                <p className="text-sm text-gray-400">That’s not confusion. That’s awareness.</p>
-              </div>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* --- FOOTER CTA --- */}
-        <footer className="text-center pb-20">
-          <Reveal>
-            <h2 className="text-3xl font-orbitron font-bold mb-4">Reality Distortion Simulator</h2>
-            <p className="font-mono text-gray-500 mb-12">
-              It doesn’t give answers. It removes certainty.
-            </p>
-
-            <Link href="/">
-              <button className="group relative inline-flex items-center gap-3 px-8 py-4 bg-cyber-danger/10 border border-cyber-danger text-cyber-danger font-mono font-bold tracking-widest uppercase hover:bg-cyber-danger hover:text-black transition-all duration-300">
-                <AlertTriangle className="w-5 h-5" />
-                <span>Enter at your own risk</span>
-                <div className="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-0 transition-transform duration-200 skew-x-12"></div>
-              </button>
-            </Link>
-
-            <p className="mt-8 text-xs text-gray-600 font-mono">
-              Use it carefully. Or don’t. <br/>
-              Either way — your perception will not be the same afterward.
-            </p>
-          </Reveal>
-        </footer>
-
-      </div>
+const SceneRealization = ({ progress, text }) => {
+  const [line1, line2] = text;
+  
+  const glitch = useTransform(progress, [0.4, 0.5, 0.6], [0, 10, 0]);
+  const color = useTransform(progress, [0.45, 0.5, 0.55], ["#a3a3a3", "#ef4444", "#a3a3a3"]); 
+  
+  return (
+    <div className="flex flex-col gap-4 items-center text-center">
+      <motion.h2 style={{ opacity: useTransform(progress, [0, 0.2], [0, 1]) }} className="text-2xl md:text-3xl text-neutral-500 font-light">{line1}</motion.h2>
+      <motion.h2 
+        style={{ 
+            x: glitch,
+            color,
+            opacity: useTransform(progress, [0.2, 0.4], [0, 1])
+        }} 
+        className="text-4xl md:text-6xl font-bold uppercase tracking-widest"
+      >
+        {line2}
+      </motion.h2>
     </div>
+  );
+};
+
+const SceneDissonance = ({ progress, text }) => {
+    // 1. Hooks (MUST RUN EVERY TIME)
+    const y1 = useTransform(progress, [0, 1], [100, 0]);
+    const y2 = useTransform(progress, [0, 1], [-100, 0]);
+    const x1 = useTransform(progress, [0, 1], [-100, 0]);
+    const x2 = useTransform(progress, [0, 1], [100, 0]);
+    
+    const op1 = useTransform(progress, [0, 0.3], [0, 1]);
+    const op2 = useTransform(progress, [0, 0.4], [0, 1]);
+    const op3 = useTransform(progress, [0, 0.5], [0, 1]);
+    const op4 = useTransform(progress, [0, 0.6], [0, 1]);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+            <motion.div style={{ y: y1, opacity: op1 }} className="text-xl md:text-2xl font-mono text-red-500">{text[0]}</motion.div>
+            <motion.div style={{ y: y2, opacity: op2 }} className="text-xl md:text-2xl font-mono text-green-500">{text[1]}</motion.div>
+            <motion.div style={{ x: x1, opacity: op3 }} className="text-xl md:text-2xl font-mono text-neutral-500">{text[2]}</motion.div>
+            <motion.div style={{ x: x2, opacity: op4 }} className="text-xl md:text-2xl font-mono text-blue-500">{text[3]}</motion.div>
+        </div>
+    );
+};
+
+const SceneMirror = ({ progress, text }) => {
+    const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+    const [showHidden, setShowHidden] = useState(false);
+    
+    useEffect(() => {
+        const t = setTimeout(() => setShowHidden(true), 3000);
+        return () => clearTimeout(t);
+    }, []);
+
+    return (
+        <div className="text-center relative">
+            <motion.h2 style={{ opacity }} className="text-3xl md:text-5xl font-light text-white mb-4">
+                {text}
+            </motion.h2>
+            
+            {showHidden && (
+                <motion.p 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    transition={{ duration: 2 }}
+                    className="text-xs font-mono text-neutral-600 absolute -bottom-12 left-0 right-0"
+                >
+                    (You are still looking for a safe answer.)
+                </motion.p>
+            )}
+        </div>
+    )
+}
+
+const SceneCTA = ({ progress, text }) => {
+    const router = useRouter();
+    const opacity = useTransform(progress, [0, 1], [0, 1]);
+    const scale = useTransform(progress, [0, 1], [0.9, 1]);
+    
+    return (
+        <motion.div style={{ opacity, scale }} className="text-center">
+            <button 
+                onClick={() => router.push('/simulator')}
+                className="group relative px-12 py-6 bg-transparent overflow-hidden"
+            >
+                <span className="relative z-10 text-white font-bold tracking-[0.2em] uppercase text-xl group-hover:text-black transition-colors duration-300">{text}</span>
+                <div className="absolute inset-0 border border-white group-hover:bg-white transition-colors duration-300" />
+                <span className="absolute inset-0 border border-red-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:translate-y-1 transition-all duration-100" />
+            </button>
+            <p className="mt-8 text-[10px] font-mono text-neutral-600">NO PERSONAL DATA IS STORED.</p>
+        </motion.div>
+    )
+}
+
+const GenericScene = ({ progress, text, type }) => {
+  const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+  const blur = useTransform(progress, [0, 0.2], ["10px", "0px"]);
+  
+  // Deterministic Shake
+  const shake = useTransform(progress, (v) => {
+      if (type === 'discomfort' && v > 0.4 && v < 0.6) {
+          return Math.sin(v * 50) * 4; 
+      }
+      return 0;
+  });
+
+  const xValue = useTransform(shake, (s) => {
+      if (type === 'engagement') return 24;
+      return s;
+  });
+  
+  const isArray = Array.isArray(text);
+
+  return (
+    <motion.div 
+      style={{ 
+          opacity, 
+          filter: useTransform(blur, b => `blur(${b})`), 
+          x: xValue 
+      }} 
+      className={`text-center max-w-3xl px-6 ${type === 'neutral' ? 'text-white font-bold tracking-tight' : 'text-neutral-300'}`}
+    >
+      {isArray ? (
+        <div className="flex flex-col gap-6">
+            {text.map((line, i) => (
+                 <p key={i} className={`text-2xl md:text-4xl font-light leading-relaxed ${type === 'overload' ? 'text-neutral-500' : ''}`}>{line}</p>
+            ))}
+        </div>
+      ) : (
+        <h2 className={`text-3xl md:text-6xl font-light leading-tight ${type === 'neutral' ? 'text-white' : 'text-neutral-400'}`}>{text}</h2>
+      )}
+    </motion.div>
+  );
+};
+
+
+// --- 3. WRAPPER COMPONENT ---
+// This ensures hooks are isolated per scene
+const SceneWrapper = ({ scene, scrollYProgress, scrollVelocity }) => {
+  const sceneProgress = useTransform(scrollYProgress, scene.range, [0, 1]);
+  
+  // Visibility logic
+  const opacity = useTransform(scrollYProgress, (v) => {
+      const start = scene.range[0] - 0.001;
+      const end = scene.range[1] + 0.001;
+      return v >= start && v <= end ? 1 : 0;
+  });
+
+  const pointerEvents = useTransform(opacity, v => v === 1 ? 'auto' : 'none');
+
+  return (
+    <motion.div 
+        style={{ opacity, pointerEvents }}
+        className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
+    >
+        {scene.type === 'gaslight' ? (
+            <SceneGaslight progress={sceneProgress} scrollVelocity={scrollVelocity} />
+        ) : scene.type === 'realization' ? (
+            <SceneRealization progress={sceneProgress} text={scene.text} />
+        ) : scene.type === 'dissonance' ? (
+            <SceneDissonance progress={sceneProgress} text={scene.text} />
+        ) : scene.type === 'mirror' ? (
+            <SceneMirror progress={sceneProgress} text={scene.text} />
+        ) : scene.type === 'cta' ? (
+            <SceneCTA progress={sceneProgress} text={scene.text} />
+        ) : (
+            <GenericScene progress={sceneProgress} text={scene.text} type={scene.type} />
+        )}
+    </motion.div>
+  );
+};
+
+
+// --- 4. MAIN PAGE ---
+
+export default function AboutPage() {
+  const containerRef = useRef(null);
+  const router = useRouter();
+  
+  const { scrollYProgress, scrollY } = useScroll({ target: containerRef });
+  const scrollVelocity = useVelocity(scrollY);
+  
+  // Memoize script to ensure stability
+  const activeScript = useMemo(() => SCRIPT.filter(scene => scene.type !== 'silence'), []);
+
+  return (
+    <main ref={containerRef} className="bg-black min-h-[2000vh] relative selection:bg-red-900 selection:text-white cursor-default">
+      
+      {/* 4.1 UI CONTROLS (Simplified) */}
+      <div className="fixed top-0 left-0 w-full p-6 z-[100] flex justify-between items-start pointer-events-none">
+          <button 
+            onClick={() => router.push('/')}
+            className="pointer-events-auto flex items-center gap-2 text-neutral-600 hover:text-white transition-colors text-xs font-mono uppercase tracking-widest"
+          >
+            <ArrowLeft size={14} /> Exit
+          </button>
+      </div>
+
+      <SceneSilence progress={scrollYProgress} />
+
+      {/* 4.3 STICKY STAGE */}
+      <div className="fixed inset-0 flex items-center justify-center">
+        {activeScript.map((scene) => (
+            <SceneWrapper 
+                key={scene.id} 
+                scene={scene} 
+                scrollYProgress={scrollYProgress} 
+                scrollVelocity={scrollVelocity}
+            />
+        ))}
+      </div>
+
+      {/* 4.4 PROGRESS BAR */}
+      <motion.div 
+        style={{ scaleX: scrollYProgress }} 
+        className="fixed bottom-0 left-0 h-1 origin-left z-50 bg-neutral-800" 
+      />
+      
+      {/* 4.5 SCROLL HINT */}
+      <motion.div 
+        style={{ opacity: useTransform(scrollYProgress, [0, 0.02], [1, 0]) }}
+        className="fixed bottom-10 w-full text-center text-neutral-700 animate-pulse font-mono text-[10px] uppercase tracking-widest"
+      >
+        Scroll Deep
+      </motion.div>
+
+    </main>
   );
 }

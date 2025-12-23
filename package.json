@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.24.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
+    "groq-sdk": "^0.37.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
@@ -20,8 +21,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/node": "25.0.3",
+    "@types/react": "19.2.7",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "5.9.3"
   }
 }
