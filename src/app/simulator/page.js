@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, AlertTriangle, TrendingUp, Briefcase, Terminal, 
   Search, Sliders, Shield, Zap, Activity, Maximize2, Minimize2, 
-  ChevronRight, Database, Lock, Globe, Megaphone, Flame, Eye, X, Info
+  ChevronRight, Database, Lock, Globe, Megaphone, Flame, Eye, X, FileText, Info, 
+  Radio, Play, Square, StopCircle
 } from "lucide-react";
 
 // --- THEMES & INSIGHTS ---
@@ -17,15 +18,19 @@ const THEMES = {
     icon: <Megaphone className="w-6 h-6" />,
     mechanism: "Identity Confirmation & Tribal Signaling",
     desc: "Reframes facts to validate specific ideologies while subtly demonizing opposing viewpoints. It swaps neutral nouns for loaded labels.",
-    defense: "Strip away the adjectives. Ask: Is this attacking a policy, or a group of people?"
+    defense: "Strip away the adjectives. Ask: Is this attacking a policy, or a group of people?",
+    voice: { rate: 1.1, pitch: 0.9, lang: "en-US" },
+    ambience: "drone_high"
   },
   Fear: {
     color: "red",
     hex: "#dc2626",
     icon: <AlertTriangle className="w-6 h-6" />,
     mechanism: "Amygdala Activation (Threat Detection)",
-    desc: "Bypasses logic by simulating immediate danger. Uses high-arousal words like 'crisis', 'catastrophe', and 'deadly' to force a reaction.",
-    defense: "Pause for 5 seconds. Fear creates urgency; reality rarely requires an instant reaction."
+    desc: "Bypasses logic by simulating immediate danger using high-arousal words like 'crisis', 'catastrophe', and 'deadly'.",
+    defense: "Pause for 5 seconds. Fear creates urgency; reality rarely requires an instant reaction.",
+    voice: { rate: 1.5, pitch: 1.3, lang: "en-US" },
+    ambience: "heartbeat"
   },
   Cynicism: {
     color: "purple",
@@ -33,29 +38,37 @@ const THEMES = {
     icon: <Terminal className="w-6 h-6" />,
     mechanism: "Motive Attribution & Trust Erosion",
     desc: "Assumes the worst intent. Frames incompetence as malice and neutral actions as selfish strategies.",
-    defense: "Hanlon’s Razor: Never attribute to malice that which is adequately explained by stupidity."
+    defense: "Hanlon’s Razor: Never attribute to malice that which is adequately explained by stupidity.",
+    voice: { rate: 0.9, pitch: 0.7, lang: "en-UK" },
+    ambience: "static"
   },
   Optimism: {
     color: "emerald",
     hex: "#10b981",
     icon: <TrendingUp className="w-6 h-6" />,
-    mechanism: "Selective Filtering & Toxic Positivity",
+    mechanism: "Toxic Positivity & Glossing",
     desc: "Minimizes risks and highlights only favorable outcomes. Common in corporate PR to create false security.",
-    defense: "Look for omitted context. 'Challenges' usually mean 'Severe Problems'."
+    defense: "Look for omitted context. 'Challenges' usually mean 'Severe Problems'.",
+    voice: { rate: 1.1, pitch: 1.2, lang: "en-US" },
+    ambience: "chime"
   },
   Authority: {
     color: "blue",
     hex: "#2563eb",
     icon: <Briefcase className="w-6 h-6" />,
     mechanism: "Jargon & Status Signaling",
-    desc: "Uses complex language to shut down questioning. Implies the speaker holds exclusive knowledge you cannot understand.",
-    defense: "Translate to simple English. If the argument vanishes without the big words, it is manipulation."
+    desc: "Uses complex language to shut down questioning. Implies the speaker holds exclusive knowledge.",
+    defense: "Translate to simple English. If the argument vanishes without the big words, it is manipulation.",
+    voice: { rate: 0.8, pitch: 0.5, lang: "en-US" },
+    ambience: "rumble"
   }
 };
 
 // --- AUDIO ENGINE ---
-const useSoundEngine = (enabled) => {
+const useAudioSystem = () => {
   const audioCtx = useRef(null);
+  const [speaking, setSpeaking] = useState(false);
+
   const initAudio = () => {
     if (!audioCtx.current) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -63,8 +76,9 @@ const useSoundEngine = (enabled) => {
     }
     if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
   };
+
   const playTone = (freq, type, duration) => {
-    if (!enabled || !audioCtx.current) return;
+    if (!audioCtx.current) return;
     const osc = audioCtx.current.createOscillator();
     const gain = audioCtx.current.createGain();
     osc.type = type;
@@ -76,11 +90,33 @@ const useSoundEngine = (enabled) => {
     osc.start();
     osc.stop(audioCtx.current.currentTime + duration);
   };
+
+  const speak = (text, profile) => {
+    if (typeof window === 'undefined') return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = profile?.rate || 1;
+    utterance.pitch = profile?.pitch || 1;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.lang === profile.lang) || voices[0];
+    if (preferred) utterance.voice = preferred;
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeech = () => {
+    if (typeof window === 'undefined') return;
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+  };
+
   return { 
     initAudio, 
     playClick: () => playTone(1200, 'sine', 0.05),
     playHover: () => playTone(150, 'triangle', 0.05),
-    playOpen: () => playTone(400, 'sine', 0.3)
+    playOpen: () => playTone(400, 'sine', 0.3),
+    speak, stopSpeech, speaking
   };
 };
 
@@ -92,19 +128,19 @@ const ProfessionalBackground = () => (
   </div>
 );
 
-// --- MODAL COMPONENT (COLOR CODED) ---
+// --- MODAL ---
 const AnalysisModal = ({ card, onClose }) => {
   const theme = THEMES[card.title];
-  
-  // Tailwind map for dynamic colors
+  const { speak, stopSpeech, speaking } = useAudioSystem();
+
+  // Color Mapping
   const colorMap = {
     orange: "text-orange-500 border-orange-500/30 bg-orange-950/20",
     red: "text-red-500 border-red-500/30 bg-red-950/20",
     purple: "text-purple-500 border-purple-500/30 bg-purple-950/20",
     emerald: "text-emerald-500 border-emerald-500/30 bg-emerald-950/20",
     blue: "text-blue-500 border-blue-500/30 bg-blue-950/20",
-  };
-  const themeClass = colorMap[theme.color];
+  }[theme.color];
 
   return (
     <motion.div 
@@ -115,13 +151,11 @@ const AnalysisModal = ({ card, onClose }) => {
       <motion.div 
         initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-3xl bg-black border border-white/10 shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[90vh]`}
+        className={`w-full max-w-4xl bg-black border ${colorMap.split(' ')[1]} shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[90vh]`}
       >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-8 border-b ${themeClass.split(' ')[1]} relative overflow-hidden`}>
-          <div className={`absolute inset-0 ${themeClass.split(' ')[2]} opacity-50`} />
+        <div className={`flex items-center justify-between p-8 border-b ${colorMap.split(' ')[1]} relative bg-neutral-900/50`}>
           <div className="flex items-center gap-5 relative z-10">
-            <div className={`p-3 rounded-lg border bg-black ${themeClass.split(' ')[0]} ${themeClass.split(' ')[1]}`}>
+            <div className={`p-3 rounded-lg border bg-black ${colorMap.split(' ')[1]} ${colorMap.split(' ')[0]}`}>
               {theme.icon}
             </div>
             <div>
@@ -131,57 +165,52 @@ const AnalysisModal = ({ card, onClose }) => {
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="relative z-10 p-2 hover:bg-white/10 rounded-full transition-colors text-white">
+          <button onClick={() => { stopSpeech(); onClose(); }} className="relative z-10 p-2 hover:bg-white/10 rounded-full transition-colors text-white">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-8 overflow-y-auto space-y-8">
-          
-          {/* The Output Text */}
-          <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-neutral-500">Output Reality</label>
-            <p className="text-2xl md:text-3xl text-white font-serif leading-relaxed pl-6 border-l-4 border-neutral-800">
-              "{card.text}"
-            </p>
+          <div className="space-y-4">
+            <div className="flex justify-between items-end">
+               <label className="text-xs font-bold uppercase tracking-widest text-neutral-500">Output Reality</label>
+               <button 
+                 onClick={() => speaking ? stopSpeech() : speak(card.text, theme.voice)}
+                 className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-black uppercase tracking-wider transition-all ${speaking ? 'bg-white text-black border-white animate-pulse' : 'bg-black text-white border-white/20 hover:border-white'}`}
+               >
+                 {speaking ? <Square className="w-3 h-3 fill-current"/> : <Play className="w-3 h-3 fill-current"/>}
+                 {speaking ? "Stop Audio" : "Play Voice"}
+               </button>
+            </div>
+            <p className="text-2xl md:text-3xl text-white font-serif leading-relaxed pl-6 border-l-4 border-neutral-800">"{card.text}"</p>
           </div>
 
           <div className="w-full h-px bg-white/10" />
 
-          {/* Educational Grid */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <div className={`flex items-center gap-2 ${themeClass.split(' ')[0]}`}>
+              <div className={`flex items-center gap-2 ${colorMap.split(' ')[0]}`}>
                 <Activity className="w-4 h-4" />
                 <h3 className="text-xs font-bold uppercase tracking-widest">Mechanism</h3>
               </div>
               <p className="text-sm font-bold text-white">{theme.mechanism}</p>
-              <p className="text-sm text-neutral-400 leading-relaxed">
-                {theme.desc}
-              </p>
+              <p className="text-sm text-neutral-400 leading-relaxed">{theme.desc}</p>
             </div>
-
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-white">
                 <Shield className="w-4 h-4" />
                 <h3 className="text-xs font-bold uppercase tracking-widest">Defense Strategy</h3>
               </div>
-              <p className="text-sm text-neutral-300 leading-relaxed italic bg-neutral-900/50 p-4 rounded border border-white/5">
-                "{theme.defense}"
-              </p>
+              <p className="text-sm text-neutral-300 leading-relaxed italic bg-neutral-900/50 p-4 rounded border border-white/5">"{theme.defense}"</p>
             </div>
           </div>
 
-          {/* Triggers */}
           {card.triggers && card.triggers.length > 0 && (
              <div className="bg-neutral-900/30 p-5 rounded-lg border border-white/5">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-4">Identified Triggers</h4>
                 <div className="flex flex-wrap gap-3">
                   {card.triggers.map((t, i) => (
-                    <span key={i} className={`px-3 py-1.5 bg-black border ${themeClass.split(' ')[1]} ${themeClass.split(' ')[0]} text-xs font-mono uppercase tracking-wider rounded`}>
-                      {t}
-                    </span>
+                    <span key={i} className={`px-3 py-1.5 bg-black border ${colorMap.split(' ')[1]} ${colorMap.split(' ')[0]} text-xs font-mono uppercase tracking-wider rounded`}>{t}</span>
                   ))}
                 </div>
              </div>
@@ -200,12 +229,13 @@ export default function SimulatorPage() {
   const [resultData, setResultData] = useState(null);
   const [simulationMode, setSimulationMode] = useState("distort");
   const [intensity, setIntensity] = useState(50); 
+  // REMOVED "REDACTED" FROM DEFAULT
   const [viewMode, setViewMode] = useState("standard");
   const [history, setHistory] = useState([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   
-  const { initAudio, playClick, playHover, playOpen } = useSoundEngine(true);
+  const { initAudio, playClick, playHover, playOpen } = useAudioSystem();
 
   useEffect(() => {
     const saved = localStorage.getItem("rds_history");
@@ -282,7 +312,6 @@ export default function SimulatorPage() {
     <main onClick={initAudio} className="h-screen w-screen fixed inset-0 bg-black text-white font-sans flex flex-col overflow-hidden selection:bg-white selection:text-black">
       <ProfessionalBackground />
       
-      {/* Modal Overlay */}
       <AnimatePresence>
         {selectedCard && <AnalysisModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       </AnimatePresence>
@@ -307,7 +336,7 @@ export default function SimulatorPage() {
 
       <AnimatePresence mode="wait">
         
-        {/* --- PHASE 1: INPUT (PURE BLACK & WHITE) --- */}
+        {/* --- PHASE 1: INPUT --- */}
         {status === 'idle' && (
           <motion.div 
             key="input"
@@ -315,7 +344,6 @@ export default function SimulatorPage() {
             className="flex-1 flex flex-col items-center justify-center relative z-10 px-6"
           >
              <div className="w-full max-w-4xl">
-                {/* Tabs */}
                 <div className="flex justify-center mb-8">
                    <div className="flex p-1 bg-neutral-900 border border-neutral-800">
                      <button onClick={() => setSimulationMode('distort')} className={`px-10 py-3 text-xs font-bold uppercase tracking-widest transition-all ${simulationMode === 'distort' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'}`}>Distortion</button>
@@ -323,7 +351,6 @@ export default function SimulatorPage() {
                    </div>
                 </div>
 
-                {/* Black Input Box */}
                 <div className="bg-black border border-white/20 shadow-2xl relative">
                    <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-white" />
                    <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-white" />
@@ -350,7 +377,6 @@ export default function SimulatorPage() {
                    </div>
                 </div>
 
-                {/* History */}
                 {history.length > 0 && (
                   <div className="mt-8 flex justify-center gap-4">
                      {history.slice(0, 3).map(item => (
@@ -378,11 +404,10 @@ export default function SimulatorPage() {
           </motion.div>
         )}
 
-        {/* --- PHASE 3: RESULTS (COLORFUL) --- */}
+        {/* --- PHASE 3: RESULTS --- */}
         {status === 'results' && resultData && (
           <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col relative z-10 overflow-hidden pt-20">
             
-            {/* Controls */}
             <div className="h-16 bg-black border-b border-white/10 flex items-center justify-between px-8 z-20">
                <div className="flex items-center gap-6 text-neutral-400">
                   <Sliders className="w-4 h-4"/>
@@ -390,17 +415,17 @@ export default function SimulatorPage() {
                   <span className="text-xs font-mono text-white">{intensity}% Distortion</span>
                </div>
                <div className="flex gap-2">
-                  {['standard', 'diff', 'redacted'].map(m => (
+                  {/* REMOVED 'REDACTED' */}
+                  {['standard', 'diff', 'social'].map(m => (
                     <button key={m} onClick={() => setViewMode(m)} className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all ${viewMode === m ? 'bg-white text-black border-white' : 'bg-transparent text-neutral-500 border-neutral-800 hover:text-white'}`}>{m}</button>
                   ))}
                </div>
             </div>
 
-            {/* Grid */}
             <div className="flex-1 overflow-y-auto p-10 scrollbar-hide">
                <div className="max-w-[2000px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
                   
-                  {/* SOURCE NODE (Black/White) */}
+                  {/* SOURCE */}
                   <div className="lg:col-span-1">
                      <div className="p-8 border border-neutral-800 bg-neutral-900/20 h-full">
                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-500 mb-6 flex items-center gap-3">
@@ -410,24 +435,51 @@ export default function SimulatorPage() {
                      </div>
                   </div>
 
-                  {/* RESULT CARDS (COLORFUL) */}
+                  {/* RESULTS */}
                   <div className="lg:col-span-3">
                      {simulationMode === 'distort' ? (
                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                         {Object.keys(resultData).filter(key => THEMES[key.charAt(0).toUpperCase() + key.slice(1)]).map((key) => {
-                            const title = key.charAt(0).toUpperCase() + key.slice(1);
-                            const data = resultData[key];
-                            const level = intensity < 33 ? "low" : intensity < 66 ? "med" : "high";
-                            return (
-                              <InteractiveCard 
-                                key={key}
-                                title={title} 
-                                data={data} intensity={intensity} viewMode={viewMode}
-                                onOpen={() => openModal({ title, ...data[level], triggers: data.high.triggers })}
-                                playHover={playHover}
-                              />
-                            )
-                         })}
+                         {/* POLITICAL CARD (Explicitly First) */}
+                         <InteractiveCard 
+                           title="Political" 
+                           theme="orange"
+                           icon={<Megaphone className="w-5 h-5"/>}
+                           data={resultData.politics} intensity={intensity} viewMode={viewMode}
+                           onOpen={() => openModal({ title: "Political", color: "orange", icon: <Megaphone/>, ...resultData.politics[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.politics.high.triggers })}
+                           playHover={playHover}
+                         />
+                         <InteractiveCard 
+                           title="Fear" 
+                           theme="red"
+                           icon={<AlertTriangle className="w-5 h-5"/>}
+                           data={resultData.fear} intensity={intensity} viewMode={viewMode}
+                           onOpen={() => openModal({ title: "Fear", color: "red", icon: <AlertTriangle/>, ...resultData.fear[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.fear.high.triggers })}
+                           playHover={playHover}
+                         />
+                         <InteractiveCard 
+                           title="Cynicism" 
+                           theme="purple"
+                           icon={<Terminal className="w-5 h-5"/>}
+                           data={resultData.cynicism} intensity={intensity} viewMode={viewMode}
+                           onOpen={() => openModal({ title: "Cynicism", color: "purple", icon: <Terminal/>, ...resultData.cynicism[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.cynicism.high.triggers })}
+                           playHover={playHover}
+                         />
+                         <InteractiveCard 
+                           title="Optimism" 
+                           theme="emerald"
+                           icon={<TrendingUp className="w-5 h-5"/>}
+                           data={resultData.optimism} intensity={intensity} viewMode={viewMode}
+                           onOpen={() => openModal({ title: "Optimism", color: "emerald", icon: <TrendingUp/>, ...resultData.optimism[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.optimism.high.triggers })}
+                           playHover={playHover}
+                         />
+                         <InteractiveCard 
+                           title="Authority" 
+                           theme="blue"
+                           icon={<Briefcase className="w-5 h-5"/>}
+                           data={resultData.authority} intensity={intensity} viewMode={viewMode}
+                           onOpen={() => openModal({ title: "Authority", color: "blue", icon: <Briefcase/>, ...resultData.authority[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.authority.high.triggers })}
+                           playHover={playHover}
+                         />
                        </div>
                      ) : (
                        <div className="border border-blue-500/30 bg-blue-950/10 p-12">
@@ -452,68 +504,57 @@ export default function SimulatorPage() {
   );
 }
 
-// --- COLORFUL INTERACTIVE CARD ---
-const InteractiveCard = ({ title, data, intensity, viewMode, onOpen, playHover }) => {
+// --- CARD COMPONENT ---
+const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, playHover, theme }) => {
   if (!data) return null;
   const levelKey = intensity < 33 ? "low" : intensity < 66 ? "med" : "high";
   const text = data[levelKey]?.text || "";
-  const theme = THEMES[title];
 
-  // Tailwind maps for dynamic colors
-  const borderColor = {
-    orange: "hover:border-orange-500/50",
-    red: "hover:border-red-500/50",
-    purple: "hover:border-purple-500/50",
-    emerald: "hover:border-emerald-500/50",
-    blue: "hover:border-blue-500/50"
-  }[theme.color];
-
-  const textColor = {
-    orange: "text-orange-500",
-    red: "text-red-500",
-    purple: "text-purple-500",
-    emerald: "text-emerald-500",
-    blue: "text-blue-500"
-  }[theme.color];
-
-  const bgColor = {
-    orange: "hover:bg-orange-950/10",
-    red: "hover:bg-red-950/10",
-    purple: "hover:bg-purple-950/10",
-    emerald: "hover:bg-emerald-950/10",
-    blue: "hover:bg-blue-950/10"
-  }[theme.color];
+  // Dynamic Theme Colors
+  const colors = {
+    orange: "border-orange-500/20 hover:border-orange-500/60 text-orange-500 bg-orange-950/5 hover:bg-orange-950/20",
+    red: "border-red-500/20 hover:border-red-500/60 text-red-500 bg-red-950/5 hover:bg-red-950/20",
+    purple: "border-purple-500/20 hover:border-purple-500/60 text-purple-500 bg-purple-950/5 hover:bg-purple-950/20",
+    emerald: "border-emerald-500/20 hover:border-emerald-500/60 text-emerald-500 bg-emerald-950/5 hover:bg-emerald-950/20",
+    blue: "border-blue-500/20 hover:border-blue-500/60 text-blue-500 bg-blue-950/5 hover:bg-blue-950/20",
+  };
+  
+  const currentTheme = colors[theme];
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       onMouseEnter={playHover}
       onClick={onOpen}
-      className={`group relative p-8 bg-black border border-white/10 ${borderColor} ${bgColor} transition-all duration-500 cursor-pointer flex flex-col h-full min-h-[350px] shadow-lg`}
+      className={`group relative p-8 border transition-all duration-500 cursor-pointer flex flex-col h-full min-h-[350px] shadow-lg hover:shadow-2xl hover:-translate-y-1 ${currentTheme}`}
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className={`p-3 bg-black border border-white/10 ${textColor} group-hover:scale-110 transition-transform duration-300`}>
-            {theme.icon}
+          <div className={`p-3 bg-black border border-white/10 group-hover:scale-110 transition-transform duration-300`}>
+            {icon}
           </div>
-          <span className={`text-xs font-black uppercase tracking-[0.2em] text-neutral-500 group-hover:text-white transition-colors`}>{title}</span>
+          <span className={`text-xs font-black uppercase tracking-[0.2em] transition-colors`}>{title}</span>
         </div>
-        <Info className={`w-4 h-4 text-neutral-700 group-hover:text-white transition-colors`} />
+        <Info className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
       </div>
 
       <div className="flex-1">
         {viewMode === 'standard' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed group-hover:text-white transition-colors">"{text}"</p>}
         {viewMode === 'diff' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed">"{text}"</p>}
-        {viewMode === 'redacted' && (
-          <div className="text-lg leading-loose font-mono">
-             {text.split(" ").map((w,i) => <span key={i} className="bg-neutral-800 text-transparent hover:bg-transparent hover:text-white transition-all px-1 rounded-sm cursor-pointer mr-1">{w}</span>)}
-          </div>
+        {viewMode === 'social' && (
+           <div className="bg-neutral-900 border border-neutral-800 p-4 font-sans text-sm">
+              <div className="text-[10px] text-neutral-500 mb-2 font-bold uppercase">@{title.toLowerCase()}_feed</div>
+              <p className="text-white mb-4">"{text}"</p>
+              <div className="flex gap-4 text-neutral-600 text-[10px] font-bold uppercase tracking-widest">
+                 <span>Like</span> <span>Share</span>
+              </div>
+           </div>
         )}
       </div>
 
       <div className="mt-8 pt-6 border-t border-neutral-900 flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-         <span className={`text-[10px] uppercase tracking-widest ${textColor}`}>Tap for Analysis</span>
-         <ChevronRight className={`w-4 h-4 ${textColor}`} />
+         <span className={`text-[10px] uppercase tracking-widest text-neutral-500`}>Tap for Analysis</span>
+         <ChevronRight className="w-4 h-4" />
       </div>
     </motion.div>
   );
