@@ -7,10 +7,10 @@ import {
   ArrowLeft, AlertTriangle, TrendingUp, Briefcase, Terminal, 
   Search, Sliders, Shield, Zap, Activity, Maximize2, Minimize2, 
   ChevronRight, Database, Lock, Globe, Megaphone, Flame, Eye, X, FileText, Info, 
-  Radio, Play, Square, StopCircle
+  Radio, Play, Square, StopCircle, ShieldAlert // Added ShieldAlert
 } from "lucide-react";
 
-// --- THEMES & INSIGHTS ---
+// --- [THEMES & AUDIO ENGINE REMAIN UNCHANGED] ---
 const THEMES = {
   Political: {
     color: "orange",
@@ -64,7 +64,6 @@ const THEMES = {
   }
 };
 
-// --- AUDIO ENGINE ---
 const useAudioSystem = () => {
   const audioCtx = useRef(null);
   const [speaking, setSpeaking] = useState(false);
@@ -133,7 +132,6 @@ const AnalysisModal = ({ card, onClose }) => {
   const theme = THEMES[card.title];
   const { speak, stopSpeech, speaking } = useAudioSystem();
 
-  // Color Mapping
   const colorMap = {
     orange: "text-orange-500 border-orange-500/30 bg-orange-950/20",
     red: "text-red-500 border-red-500/30 bg-red-950/20",
@@ -221,13 +219,12 @@ const AnalysisModal = ({ card, onClose }) => {
   );
 };
 
-// --- CARD COMPONENT ---
-const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, playHover, theme }) => {
+// --- UPDATED CARD COMPONENT (With Defend Button) ---
+const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, onDefend, playHover, theme }) => {
   if (!data) return null;
   const levelKey = intensity < 33 ? "low" : intensity < 66 ? "med" : "high";
   const text = data[levelKey]?.text || "";
 
-  // Dynamic Theme Colors
   const colors = {
     orange: "border-orange-500/20 hover:border-orange-500/60 text-orange-500 bg-orange-950/5 hover:bg-orange-950/20",
     red: "border-red-500/20 hover:border-red-500/60 text-red-500 bg-red-950/5 hover:bg-red-950/20",
@@ -269,18 +266,28 @@ const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, playH
         )}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-neutral-900 flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-         <span className={`text-[10px] uppercase tracking-widest text-neutral-500`}>Tap for Analysis</span>
-         <ChevronRight className="w-4 h-4" />
+      {/* FOOTER ACTIONS - Includes Defend Button */}
+      <div className="mt-8 pt-6 border-t border-neutral-900 flex justify-between items-center">
+         <span className={`text-[10px] uppercase tracking-widest text-neutral-500 opacity-50 group-hover:opacity-100`}>Tap for Analysis</span>
+         
+         <button 
+            onClick={(e) => { 
+                e.stopPropagation(); 
+                onDefend(text, title); 
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-wider hover:bg-neutral-200 transition-all opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+         >
+            <ShieldAlert className="w-3 h-3" /> Defend
+         </button>
       </div>
     </motion.div>
   );
 };
 
-// --- SIMULATOR CONTENT (Logic Extracted for Suspense) ---
+// --- SIMULATOR CONTENT ---
 const SimulatorContent = () => {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Get URL Params
+  const searchParams = useSearchParams();
   
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle"); 
@@ -294,6 +301,16 @@ const SimulatorContent = () => {
   const [selectedCard, setSelectedCard] = useState(null);
   
   const { initAudio, playClick, playHover, playOpen } = useAudioSystem();
+
+  // --- BRIDGE TO ARGUELY ---
+  const handleDefend = (variantText, variantType) => {
+      // 1. Encode the specific variant text selected by the user
+      const encodedTopic = encodeURIComponent(variantText);
+      
+      // 2. Redirect to Arguely with the text + metadata
+      // The `source=TIO_SIM` parameter will trigger the specific alert in Arguely
+      window.open(`https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO_SIM&variant=${variantType}`, "_blank");
+  };
 
   // --- AUTO-SEARCH LOGIC ---
   useEffect(() => {
@@ -312,7 +329,7 @@ const SimulatorContent = () => {
        setInput(textInput);
        handleAnalyze(textInput);
     }
-  }, [searchParams]); // Trigger when params load
+  }, [searchParams]);
 
   useEffect(() => {
     const saved = localStorage.getItem("rds_history");
@@ -328,7 +345,6 @@ const SimulatorContent = () => {
     }
   };
 
-  // Modified to accept textOverride for auto-run
   const handleAnalyze = async (textOverride = null) => {
     if (!textOverride) playClick();
     
@@ -340,7 +356,7 @@ const SimulatorContent = () => {
     setResultData(null);
     
     let step = 0;
-    const messages = ["ESTABLISHING LINK...", "PARSING SEMANTICS...", "INJECTING BIAS...", "RENDERING OUTPUT..."];
+    const messages = ["INGESTING SURVIVOR VARIANT...", "FRACTURING TRUTH...", "GENERATING NARRATIVES...", "RENDERING OUTPUTS..."];
     const logInterval = setInterval(() => {
       if (step < messages.length) { setLogs(prev => [...prev, messages[step]]); step++; }
     }, 500);
@@ -382,7 +398,6 @@ const SimulatorContent = () => {
     setStatus('idle');
     setInput('');
     setResultData(null);
-    // Clear URL params without reload
     router.replace('/simulator', { scroll: false });
   };
 
@@ -399,7 +414,6 @@ const SimulatorContent = () => {
         {selectedCard && <AnalysisModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       </AnimatePresence>
 
-      {/* Header */}
       <header className="fixed top-0 w-full h-20 border-b border-white/10 bg-black z-40 flex items-center justify-between px-8">
         <div className="flex items-center gap-6">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
@@ -419,7 +433,6 @@ const SimulatorContent = () => {
 
       <AnimatePresence mode="wait">
         
-        {/* --- PHASE 1: INPUT --- */}
         {status === 'idle' && (
           <motion.div 
             key="input"
@@ -473,7 +486,6 @@ const SimulatorContent = () => {
           </motion.div>
         )}
 
-        {/* --- PHASE 2: PROCESSING --- */}
         {status === 'processing' && (
           <motion.div key="processing" className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black">
              <div className="space-y-6 text-center">
@@ -487,7 +499,6 @@ const SimulatorContent = () => {
           </motion.div>
         )}
 
-        {/* --- PHASE 3: RESULTS --- */}
         {status === 'results' && resultData && (
           <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col relative z-10 overflow-hidden pt-20">
             
@@ -511,9 +522,12 @@ const SimulatorContent = () => {
                   <div className="lg:col-span-1">
                      <div className="p-8 border border-neutral-800 bg-neutral-900/20 h-full">
                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-500 mb-6 flex items-center gap-3">
-                           <Database className="w-4 h-4 text-white" /> Source
+                           <Database className="w-4 h-4 text-white" /> Original Variant
                         </h3>
                         <p className="text-xl text-white font-serif leading-loose opacity-90 border-l-2 border-white pl-4">"{input}"</p>
+                        <div className="mt-8 text-[10px] text-neutral-600 uppercase tracking-widest">
+                            Imported from Framework Core
+                        </div>
                      </div>
                   </div>
 
@@ -522,44 +536,39 @@ const SimulatorContent = () => {
                      {simulationMode === 'distort' ? (
                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                          <InteractiveCard 
-                           title="Political" 
-                           theme="orange"
-                           icon={<Megaphone className="w-5 h-5"/>}
+                           title="Political" theme="orange" icon={<Megaphone className="w-5 h-5"/>}
                            data={resultData.politics} intensity={intensity} viewMode={viewMode}
+                           playHover={playHover}
                            onOpen={() => openModal({ title: "Political", color: "orange", icon: <Megaphone/>, ...resultData.politics[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.politics.high.triggers })}
-                           playHover={playHover}
+                           onDefend={handleDefend}
                          />
                          <InteractiveCard 
-                           title="Fear" 
-                           theme="red"
-                           icon={<AlertTriangle className="w-5 h-5"/>}
+                           title="Fear" theme="red" icon={<AlertTriangle className="w-5 h-5"/>}
                            data={resultData.fear} intensity={intensity} viewMode={viewMode}
+                           playHover={playHover}
                            onOpen={() => openModal({ title: "Fear", color: "red", icon: <AlertTriangle/>, ...resultData.fear[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.fear.high.triggers })}
-                           playHover={playHover}
+                           onDefend={handleDefend}
                          />
                          <InteractiveCard 
-                           title="Cynicism" 
-                           theme="purple"
-                           icon={<Terminal className="w-5 h-5"/>}
+                           title="Cynicism" theme="purple" icon={<Terminal className="w-5 h-5"/>}
                            data={resultData.cynicism} intensity={intensity} viewMode={viewMode}
+                           playHover={playHover}
                            onOpen={() => openModal({ title: "Cynicism", color: "purple", icon: <Terminal/>, ...resultData.cynicism[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.cynicism.high.triggers })}
-                           playHover={playHover}
+                           onDefend={handleDefend}
                          />
                          <InteractiveCard 
-                           title="Optimism" 
-                           theme="emerald"
-                           icon={<TrendingUp className="w-5 h-5"/>}
+                           title="Optimism" theme="emerald" icon={<TrendingUp className="w-5 h-5"/>}
                            data={resultData.optimism} intensity={intensity} viewMode={viewMode}
-                           onOpen={() => openModal({ title: "Optimism", color: "emerald", icon: <TrendingUp/>, ...resultData.optimism[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.optimism.high.triggers })}
                            playHover={playHover}
+                           onOpen={() => openModal({ title: "Optimism", color: "emerald", icon: <TrendingUp/>, ...resultData.optimism[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.optimism.high.triggers })}
+                           onDefend={handleDefend}
                          />
                          <InteractiveCard 
-                           title="Authority" 
-                           theme="blue"
-                           icon={<Briefcase className="w-5 h-5"/>}
+                           title="Authority" theme="blue" icon={<Briefcase className="w-5 h-5"/>}
                            data={resultData.authority} intensity={intensity} viewMode={viewMode}
-                           onOpen={() => openModal({ title: "Authority", color: "blue", icon: <Briefcase/>, ...resultData.authority[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.authority.high.triggers })}
                            playHover={playHover}
+                           onOpen={() => openModal({ title: "Authority", color: "blue", icon: <Briefcase/>, ...resultData.authority[intensity < 33 ? "low" : intensity < 66 ? "med" : "high"], triggers: resultData.authority.high.triggers })}
+                           onDefend={handleDefend}
                          />
                        </div>
                      ) : (
@@ -585,7 +594,6 @@ const SimulatorContent = () => {
   );
 }
 
-// 2. EXPORT DEFAULT WRAPPED IN SUSPENSE
 export default function SimulatorPage() {
   return (
     <Suspense fallback={<div className="h-screen w-screen bg-black flex items-center justify-center text-white font-mono text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Simulator...</div>}>
