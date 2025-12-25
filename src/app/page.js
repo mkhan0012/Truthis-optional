@@ -1,9 +1,73 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Quote, Eye, Check, X } from "lucide-react";
+import { ArrowRight, Quote, Eye, Check, X, AlertTriangle, ShieldAlert } from "lucide-react";
+
+// --- NEW COMPONENT: VIRAL INTERCEPTOR ---
+const ViralInterceptor = ({ payload, onDefend }) => {
+  if (!payload) return null;
+  
+  // Parse Payload
+  let data = null;
+  try {
+     data = JSON.parse(atob(payload));
+  } catch(e) { return null; }
+
+  const { text, vector, virality } = data;
+
+  // Vector Styling Map
+  const styles = {
+     "FEAR": { border: "border-red-500", text: "text-red-500", bg: "bg-red-950/90", label: "THREAT DETECTED" },
+     "OUTRAGE": { border: "border-orange-500", text: "text-orange-500", bg: "bg-orange-950/90", label: "VIOLATION DETECTED" },
+     "VALIDATION": { border: "border-green-500", text: "text-green-500", bg: "bg-green-950/90", label: "EGO CONFIRMATION" },
+     "CONFUSION": { border: "border-purple-500", text: "text-purple-500", bg: "bg-purple-950/90", label: "REALITY FRACTURE" }
+  };
+
+  const currentStyle = styles[vector] || styles["FEAR"];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
+       <div className={`max-w-2xl w-full border-2 ${currentStyle.border} ${currentStyle.bg} p-8 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden`}>
+          
+          {/* Scanlines */}
+          <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/1/18/Scan_lines.png')]" />
+          
+          <div className="relative z-10 text-center space-y-6">
+             <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full border ${currentStyle.border} ${currentStyle.text} text-xs font-black uppercase tracking-widest animate-pulse`}>
+                <AlertTriangle className="w-4 h-4" />
+                Incoming Signal: {currentStyle.label}
+             </div>
+
+             <div className="py-8">
+                <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-tight tracking-tighter drop-shadow-2xl">
+                   "{text}"
+                </h1>
+                <div className="mt-4 flex justify-center gap-8 text-xs font-mono text-white/50 uppercase tracking-widest">
+                   <span>Virality: {virality}%</span>
+                   <span>Vector: {vector}</span>
+                </div>
+             </div>
+
+             <div className="border-t border-white/10 pt-8 space-y-4">
+                <p className="text-white/70 text-sm">This belief has been engineered for survival. It is now spreading.</p>
+                <button 
+                  onClick={() => onDefend(text)}
+                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-neutral-200 transition-all w-full md:w-auto justify-center"
+                >
+                   <ShieldAlert className="w-5 h-5 text-red-600" />
+                   Intercept & Defend Reality
+                </button>
+                <div className="text-[10px] text-white/30 uppercase tracking-widest mt-4">
+                   Redirecting to Arguely Conflict Layer
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  )
+}
 
 // --- BIAS GAME COMPONENT ---
 const BiasGame = () => {
@@ -87,7 +151,7 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
 };
 
-// --- INTERACTIVE COMPONENTS (Keep existing ones) ---
+// --- INTERACTIVE COMPONENTS ---
 const ReactionTest = () => {
   const [state, setState] = useState('idle'); // idle, waiting, ready, done
   const [result, setResult] = useState(null);
@@ -201,12 +265,26 @@ const FactBox = ({ title, children }) => (
 
 export default function Homepage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const signal = searchParams.get('signal');
+
   const [showNav, setShowNav] = useState(false);
   useEffect(() => { const timer = setTimeout(() => setShowNav(true), 6000); return () => clearTimeout(timer); }, []);
+
+  // Handler to go to Arguely
+  const handleDefend = (topic) => {
+      // Encode topic for Arguely URL
+      const encodedTopic = encodeURIComponent(topic);
+      // Redirect to Arguely Create Page
+      window.location.href = `https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO`;
+  };
 
   return (
     <main className="bg-black min-h-screen text-neutral-500 font-mono selection:bg-red-900 selection:text-white overflow-x-hidden">
       
+      {/* 1. INSERT INTERCEPTOR IF SIGNAL EXISTS */}
+      {signal && <ViralInterceptor payload={signal} onDefend={handleDefend} />}
+
       {/* FIXED NAVIGATION */}
       <motion.nav initial={{ opacity: 0 }} animate={{ opacity: showNav ? 1 : 0 }} transition={{ duration: 1 }} className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none">
         <span className="text-[10px] uppercase tracking-widest text-neutral-700">RDS // v2.0</span>
