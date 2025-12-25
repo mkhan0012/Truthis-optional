@@ -5,7 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Quote, Eye, Check, X, AlertTriangle, ShieldAlert } from "lucide-react";
 
-// --- NEW COMPONENT: VIRAL INTERCEPTOR (Logic Extracted Here) ---
+/**
+ * 1. VIRAL SIGNAL HANDLER (Logic Extracted Here)
+ * This component handles the decoding of the "Viral Signal" payload from Framework.
+ * It is wrapped in Suspense to prevent Next.js build errors.
+ */
 const ViralSignalHandler = ({ onDefend }) => {
   const searchParams = useSearchParams();
   const signal = searchParams.get('signal');
@@ -14,8 +18,10 @@ const ViralSignalHandler = ({ onDefend }) => {
 
   let data = null;
   try {
+    // Decode the Base64 payload packaged in Framework
     data = JSON.parse(atob(signal));
   } catch (e) {
+    console.error("Failed to decode viral signal");
     return null;
   }
 
@@ -255,13 +261,14 @@ export default function Homepage() {
 
   const handleDefend = (topic) => {
     const encodedTopic = encodeURIComponent(topic);
+    // Redirect bridge to Arguely Arena
     window.location.href = `https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO`;
   };
 
   return (
     <main className="bg-black min-h-screen text-neutral-500 font-mono selection:bg-red-900 selection:text-white overflow-x-hidden">
       
-      {/* 1. WRAP SEARCH PARAMS LOGIC IN SUSPENSE */}
+      {/* 2. WRAP SIGNAL HANDLER IN SUSPENSE TO FIX BUILD ERROR */}
       <Suspense fallback={null}>
         <ViralSignalHandler onDefend={handleDefend} />
       </Suspense>
