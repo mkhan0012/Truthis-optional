@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, AlertTriangle, TrendingUp, Briefcase, Terminal, 
@@ -70,11 +70,11 @@ const useAudioSystem = () => {
   const [speaking, setSpeaking] = useState(false);
 
   const initAudio = () => {
-    if (!audioCtx.current) {
+    if (typeof window !== 'undefined' && !audioCtx.current) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx.current = new AudioContext();
     }
-    if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
+    if (audioCtx.current?.state === 'suspended') audioCtx.current.resume();
   };
 
   const playTone = (freq, type, duration) => {
@@ -221,21 +221,98 @@ const AnalysisModal = ({ card, onClose }) => {
   );
 };
 
-export default function SimulatorPage() {
+// --- CARD COMPONENT ---
+const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, playHover, theme }) => {
+  if (!data) return null;
+  const levelKey = intensity < 33 ? "low" : intensity < 66 ? "med" : "high";
+  const text = data[levelKey]?.text || "";
+
+  // Dynamic Theme Colors
+  const colors = {
+    orange: "border-orange-500/20 hover:border-orange-500/60 text-orange-500 bg-orange-950/5 hover:bg-orange-950/20",
+    red: "border-red-500/20 hover:border-red-500/60 text-red-500 bg-red-950/5 hover:bg-red-950/20",
+    purple: "border-purple-500/20 hover:border-purple-500/60 text-purple-500 bg-purple-950/5 hover:bg-purple-950/20",
+    emerald: "border-emerald-500/20 hover:border-emerald-500/60 text-emerald-500 bg-emerald-950/5 hover:bg-emerald-950/20",
+    blue: "border-blue-500/20 hover:border-blue-500/60 text-blue-500 bg-blue-950/5 hover:bg-blue-950/20",
+  };
+  
+  const currentTheme = colors[theme];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      onMouseEnter={playHover}
+      onClick={onOpen}
+      className={`group relative p-8 border transition-all duration-500 cursor-pointer flex flex-col h-full min-h-[350px] shadow-lg hover:shadow-2xl hover:-translate-y-1 ${currentTheme}`}
+    >
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 bg-black border border-white/10 group-hover:scale-110 transition-transform duration-300`}>
+            {icon}
+          </div>
+          <span className={`text-xs font-black uppercase tracking-[0.2em] transition-colors`}>{title}</span>
+        </div>
+        <Info className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+      </div>
+
+      <div className="flex-1">
+        {viewMode === 'standard' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed group-hover:text-white transition-colors">"{text}"</p>}
+        {viewMode === 'diff' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed">"{text}"</p>}
+        {viewMode === 'social' && (
+           <div className="bg-neutral-900 border border-neutral-800 p-4 font-sans text-sm">
+              <div className="text-[10px] text-neutral-500 mb-2 font-bold uppercase">@{title.toLowerCase()}_feed</div>
+              <p className="text-white mb-4">"{text}"</p>
+              <div className="flex gap-4 text-neutral-600 text-[10px] font-bold uppercase tracking-widest">
+                 <span>Like</span> <span>Share</span>
+              </div>
+           </div>
+        )}
+      </div>
+
+      <div className="mt-8 pt-6 border-t border-neutral-900 flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+         <span className={`text-[10px] uppercase tracking-widest text-neutral-500`}>Tap for Analysis</span>
+         <ChevronRight className="w-4 h-4" />
+      </div>
+    </motion.div>
+  );
+};
+
+// --- SIMULATOR CONTENT (Logic Extracted for Suspense) ---
+const SimulatorContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams(); // Get URL Params
+  
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("idle"); 
   const [logs, setLogs] = useState([]);
   const [resultData, setResultData] = useState(null);
   const [simulationMode, setSimulationMode] = useState("distort");
   const [intensity, setIntensity] = useState(50); 
-  // REMOVED "REDACTED" FROM DEFAULT
   const [viewMode, setViewMode] = useState("standard");
   const [history, setHistory] = useState([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   
   const { initAudio, playClick, playHover, playOpen } = useAudioSystem();
+
+  // --- AUTO-SEARCH LOGIC ---
+  useEffect(() => {
+    const signal = searchParams.get("signal");
+    const textInput = searchParams.get("input");
+
+    if (signal && status === 'idle') {
+       try {
+         const data = JSON.parse(atob(signal));
+         if (data.text) {
+            setInput(data.text);
+            handleAnalyze(data.text);
+         }
+       } catch(e) { console.error("Signal Decode Error", e); }
+    } else if (textInput && status === 'idle') {
+       setInput(textInput);
+       handleAnalyze(textInput);
+    }
+  }, [searchParams]); // Trigger when params load
 
   useEffect(() => {
     const saved = localStorage.getItem("rds_history");
@@ -251,9 +328,13 @@ export default function SimulatorPage() {
     }
   };
 
-  const handleAnalyze = async () => {
-    playClick();
-    if (!input.trim()) return;
+  // Modified to accept textOverride for auto-run
+  const handleAnalyze = async (textOverride = null) => {
+    if (!textOverride) playClick();
+    
+    const textToProcess = typeof textOverride === 'string' ? textOverride : input;
+    if (!textToProcess?.trim()) return;
+
     setStatus("processing");
     setLogs([]);
     setResultData(null);
@@ -268,7 +349,7 @@ export default function SimulatorPage() {
       const response = await fetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input, mode: simulationMode }),
+        body: JSON.stringify({ text: textToProcess, mode: simulationMode }),
       });
 
       if (!response.ok) throw new Error("API Error");
@@ -278,7 +359,7 @@ export default function SimulatorPage() {
       setResultData(data);
       setStatus("results");
 
-      const newItem = { id: Date.now().toString(), timestamp: new Date().toISOString(), input, mode: simulationMode, result: data };
+      const newItem = { id: Date.now().toString(), timestamp: new Date().toISOString(), input: textToProcess, mode: simulationMode, result: data };
       const newHistory = [newItem, ...history].slice(0, 5); 
       setHistory(newHistory);
       localStorage.setItem("rds_history", JSON.stringify(newHistory));
@@ -301,6 +382,8 @@ export default function SimulatorPage() {
     setStatus('idle');
     setInput('');
     setResultData(null);
+    // Clear URL params without reload
+    router.replace('/simulator', { scroll: false });
   };
 
   const openModal = (cardData) => {
@@ -368,7 +451,7 @@ export default function SimulatorPage() {
                       <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">{input.length} / 1000 CHARS</span>
                       <button 
                         onMouseEnter={playHover}
-                        onClick={handleAnalyze}
+                        onClick={() => handleAnalyze()}
                         disabled={!input.trim()}
                         className="px-12 py-4 text-xs font-black uppercase tracking-[0.2em] bg-white text-black hover:bg-neutral-200 transition-all disabled:opacity-50"
                       >
@@ -415,7 +498,6 @@ export default function SimulatorPage() {
                   <span className="text-xs font-mono text-white">{intensity}% Distortion</span>
                </div>
                <div className="flex gap-2">
-                  {/* REMOVED 'REDACTED' */}
                   {['standard', 'diff', 'social'].map(m => (
                     <button key={m} onClick={() => setViewMode(m)} className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all ${viewMode === m ? 'bg-white text-black border-white' : 'bg-transparent text-neutral-500 border-neutral-800 hover:text-white'}`}>{m}</button>
                   ))}
@@ -439,7 +521,6 @@ export default function SimulatorPage() {
                   <div className="lg:col-span-3">
                      {simulationMode === 'distort' ? (
                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                         {/* POLITICAL CARD (Explicitly First) */}
                          <InteractiveCard 
                            title="Political" 
                            theme="orange"
@@ -504,58 +585,11 @@ export default function SimulatorPage() {
   );
 }
 
-// --- CARD COMPONENT ---
-const InteractiveCard = ({ title, data, intensity, viewMode, icon, onOpen, playHover, theme }) => {
-  if (!data) return null;
-  const levelKey = intensity < 33 ? "low" : intensity < 66 ? "med" : "high";
-  const text = data[levelKey]?.text || "";
-
-  // Dynamic Theme Colors
-  const colors = {
-    orange: "border-orange-500/20 hover:border-orange-500/60 text-orange-500 bg-orange-950/5 hover:bg-orange-950/20",
-    red: "border-red-500/20 hover:border-red-500/60 text-red-500 bg-red-950/5 hover:bg-red-950/20",
-    purple: "border-purple-500/20 hover:border-purple-500/60 text-purple-500 bg-purple-950/5 hover:bg-purple-950/20",
-    emerald: "border-emerald-500/20 hover:border-emerald-500/60 text-emerald-500 bg-emerald-950/5 hover:bg-emerald-950/20",
-    blue: "border-blue-500/20 hover:border-blue-500/60 text-blue-500 bg-blue-950/5 hover:bg-blue-950/20",
-  };
-  
-  const currentTheme = colors[theme];
-
+// 2. EXPORT DEFAULT WRAPPED IN SUSPENSE
+export default function SimulatorPage() {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      onMouseEnter={playHover}
-      onClick={onOpen}
-      className={`group relative p-8 border transition-all duration-500 cursor-pointer flex flex-col h-full min-h-[350px] shadow-lg hover:shadow-2xl hover:-translate-y-1 ${currentTheme}`}
-    >
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className={`p-3 bg-black border border-white/10 group-hover:scale-110 transition-transform duration-300`}>
-            {icon}
-          </div>
-          <span className={`text-xs font-black uppercase tracking-[0.2em] transition-colors`}>{title}</span>
-        </div>
-        <Info className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-      </div>
-
-      <div className="flex-1">
-        {viewMode === 'standard' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed group-hover:text-white transition-colors">"{text}"</p>}
-        {viewMode === 'diff' && <p className="text-lg text-neutral-300 font-serif font-light leading-relaxed">"{text}"</p>}
-        {viewMode === 'social' && (
-           <div className="bg-neutral-900 border border-neutral-800 p-4 font-sans text-sm">
-              <div className="text-[10px] text-neutral-500 mb-2 font-bold uppercase">@{title.toLowerCase()}_feed</div>
-              <p className="text-white mb-4">"{text}"</p>
-              <div className="flex gap-4 text-neutral-600 text-[10px] font-bold uppercase tracking-widest">
-                 <span>Like</span> <span>Share</span>
-              </div>
-           </div>
-        )}
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-neutral-900 flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
-         <span className={`text-[10px] uppercase tracking-widest text-neutral-500`}>Tap for Analysis</span>
-         <ChevronRight className="w-4 h-4" />
-      </div>
-    </motion.div>
+    <Suspense fallback={<div className="h-screen w-screen bg-black flex items-center justify-center text-white font-mono text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Simulator...</div>}>
+       <SimulatorContent />
+    </Suspense>
   );
-};
+}
