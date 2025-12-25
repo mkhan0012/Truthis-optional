@@ -1,73 +1,68 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Quote, Eye, Check, X, AlertTriangle, ShieldAlert } from "lucide-react";
 
-// --- NEW COMPONENT: VIRAL INTERCEPTOR ---
-const ViralInterceptor = ({ payload, onDefend }) => {
-  if (!payload) return null;
-  
-  // Parse Payload
+// --- NEW COMPONENT: VIRAL INTERCEPTOR (Logic Extracted Here) ---
+const ViralSignalHandler = ({ onDefend }) => {
+  const searchParams = useSearchParams();
+  const signal = searchParams.get('signal');
+
+  if (!signal) return null;
+
   let data = null;
   try {
-     data = JSON.parse(atob(payload));
-  } catch(e) { return null; }
+    data = JSON.parse(atob(signal));
+  } catch (e) {
+    return null;
+  }
 
   const { text, vector, virality } = data;
 
-  // Vector Styling Map
   const styles = {
-     "FEAR": { border: "border-red-500", text: "text-red-500", bg: "bg-red-950/90", label: "THREAT DETECTED" },
-     "OUTRAGE": { border: "border-orange-500", text: "text-orange-500", bg: "bg-orange-950/90", label: "VIOLATION DETECTED" },
-     "VALIDATION": { border: "border-green-500", text: "text-green-500", bg: "bg-green-950/90", label: "EGO CONFIRMATION" },
-     "CONFUSION": { border: "border-purple-500", text: "text-purple-500", bg: "bg-purple-950/90", label: "REALITY FRACTURE" }
+    "FEAR": { border: "border-red-500", text: "text-red-500", bg: "bg-red-950/90", label: "THREAT DETECTED" },
+    "OUTRAGE": { border: "border-orange-500", text: "text-orange-500", bg: "bg-orange-950/90", label: "VIOLATION DETECTED" },
+    "VALIDATION": { border: "border-green-500", text: "text-green-500", bg: "bg-green-950/90", label: "EGO CONFIRMATION" },
+    "CONFUSION": { border: "border-purple-500", text: "text-purple-500", bg: "bg-purple-950/90", label: "REALITY FRACTURE" }
   };
 
   const currentStyle = styles[vector] || styles["FEAR"];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
-       <div className={`max-w-2xl w-full border-2 ${currentStyle.border} ${currentStyle.bg} p-8 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden`}>
-          
-          {/* Scanlines */}
-          <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/1/18/Scan_lines.png')]" />
-          
-          <div className="relative z-10 text-center space-y-6">
-             <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full border ${currentStyle.border} ${currentStyle.text} text-xs font-black uppercase tracking-widest animate-pulse`}>
-                <AlertTriangle className="w-4 h-4" />
-                Incoming Signal: {currentStyle.label}
-             </div>
-
-             <div className="py-8">
-                <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-tight tracking-tighter drop-shadow-2xl">
-                   "{text}"
-                </h1>
-                <div className="mt-4 flex justify-center gap-8 text-xs font-mono text-white/50 uppercase tracking-widest">
-                   <span>Virality: {virality}%</span>
-                   <span>Vector: {vector}</span>
-                </div>
-             </div>
-
-             <div className="border-t border-white/10 pt-8 space-y-4">
-                <p className="text-white/70 text-sm">This belief has been engineered for survival. It is now spreading.</p>
-                <button 
-                  onClick={() => onDefend(text)}
-                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-neutral-200 transition-all w-full md:w-auto justify-center"
-                >
-                   <ShieldAlert className="w-5 h-5 text-red-600" />
-                   Intercept & Defend Reality
-                </button>
-                <div className="text-[10px] text-white/30 uppercase tracking-widest mt-4">
-                   Redirecting to Arguely Conflict Layer
-                </div>
-             </div>
+      <div className={`max-w-2xl w-full border-2 ${currentStyle.border} ${currentStyle.bg} p-8 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden`}>
+        <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/1/18/Scan_lines.png')]" />
+        <div className="relative z-10 text-center space-y-6">
+          <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full border ${currentStyle.border} ${currentStyle.text} text-xs font-black uppercase tracking-widest animate-pulse`}>
+            <AlertTriangle className="w-4 h-4" />
+            Incoming Signal: {currentStyle.label}
           </div>
-       </div>
+          <div className="py-8">
+            <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-tight tracking-tighter drop-shadow-2xl">
+              "{text}"
+            </h1>
+            <div className="mt-4 flex justify-center gap-8 text-xs font-mono text-white/50 uppercase tracking-widest">
+              <span>Virality: {virality}%</span>
+              <span>Vector: {vector}</span>
+            </div>
+          </div>
+          <div className="border-t border-white/10 pt-8 space-y-4">
+            <p className="text-white/70 text-sm">This belief has been engineered for survival. It is now spreading.</p>
+            <button 
+              onClick={() => onDefend(text)}
+              className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-neutral-200 transition-all w-full md:w-auto justify-center"
+            >
+              <ShieldAlert className="w-5 h-5 text-red-600" />
+              Intercept & Defend Reality
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
 // --- BIAS GAME COMPONENT ---
 const BiasGame = () => {
@@ -112,22 +107,13 @@ const BiasGame = () => {
   return (
     <div className="border border-neutral-800 bg-neutral-900/30 p-8 my-24 max-w-2xl mx-auto relative overflow-hidden">
       <div className="absolute top-0 right-0 p-4 opacity-20 text-[100px] leading-none font-bold select-none pointer-events-none">?</div>
-      
       <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-8">Mini-Game: Spot The Bias</h3>
-      
       <div className="min-h-[200px]">
         <p className="text-2xl text-white font-serif mb-8">"{currentQ.text}"</p>
-        
         {!answered ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {currentQ.options.map((opt, i) => (
-              <button 
-                key={i}
-                onClick={() => handleGuess(opt.isCorrect)}
-                className="py-3 border border-neutral-700 hover:bg-white hover:text-black transition-colors text-sm uppercase tracking-widest"
-              >
-                {opt.label}
-              </button>
+              <button key={i} onClick={() => handleGuess(opt.isCorrect)} className="py-3 border border-neutral-700 hover:bg-white hover:text-black transition-colors text-sm uppercase tracking-widest">{opt.label}</button>
             ))}
           </div>
         ) : (
@@ -153,7 +139,7 @@ const fadeUp = {
 
 // --- INTERACTIVE COMPONENTS ---
 const ReactionTest = () => {
-  const [state, setState] = useState('idle'); // idle, waiting, ready, done
+  const [state, setState] = useState('idle');
   const [result, setResult] = useState(null);
   const startTimeRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -262,43 +248,35 @@ const FactBox = ({ title, children }) => (
 );
 
 // --- MAIN PAGE ---
-
 export default function Homepage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const signal = searchParams.get('signal');
-
   const [showNav, setShowNav] = useState(false);
   useEffect(() => { const timer = setTimeout(() => setShowNav(true), 6000); return () => clearTimeout(timer); }, []);
 
-  // Handler to go to Arguely
   const handleDefend = (topic) => {
-      // Encode topic for Arguely URL
-      const encodedTopic = encodeURIComponent(topic);
-      // Redirect to Arguely Create Page
-      window.location.href = `https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO`;
+    const encodedTopic = encodeURIComponent(topic);
+    window.location.href = `https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO`;
   };
 
   return (
     <main className="bg-black min-h-screen text-neutral-500 font-mono selection:bg-red-900 selection:text-white overflow-x-hidden">
       
-      {/* 1. INSERT INTERCEPTOR IF SIGNAL EXISTS */}
-      {signal && <ViralInterceptor payload={signal} onDefend={handleDefend} />}
+      {/* 1. WRAP SEARCH PARAMS LOGIC IN SUSPENSE */}
+      <Suspense fallback={null}>
+        <ViralSignalHandler onDefend={handleDefend} />
+      </Suspense>
 
-      {/* FIXED NAVIGATION */}
       <motion.nav initial={{ opacity: 0 }} animate={{ opacity: showNav ? 1 : 0 }} transition={{ duration: 1 }} className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none">
         <span className="text-[10px] uppercase tracking-widest text-neutral-700">RDS // v2.0</span>
         <button onClick={() => router.push('/about')} className="pointer-events-auto px-6 py-3 border border-neutral-900 bg-black hover:border-neutral-600 text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-all duration-300">[ About ]</button>
       </motion.nav>
 
-      {/* 1. CINEMATIC INTRO */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative z-10">
         <div className="max-w-4xl space-y-12">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0] }} transition={{ duration: 4, times: [0, 0.2, 0.8, 1] }} className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-white">Truth is Optional.</h1>
             <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-red-600 mt-2">Perception is Programmable.</h1>
           </motion.div>
-
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2, delay: 5.5 }} className="space-y-8">
             <p className="text-xl md:text-2xl text-white">Information does not arrive neutral.</p>
             <p className="text-lg text-neutral-400">By the time you read a sentence,<br /><Highlight>your brain has already decided how to feel about it.</Highlight></p>
@@ -308,7 +286,6 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* 2. A MEASURABLE FACT */}
       <Section>
         <FactBox title="A Measurable Fact">
           <p>Studies in cognitive psychology show that emotional response precedes rational evaluation by <Highlight>milliseconds</Highlight>.</p>
@@ -319,7 +296,6 @@ export default function Homepage() {
         <ReactionTest />
       </Section>
 
-      {/* 3. FRAMING EXPLANATION */}
       <Section className="space-y-6">
         <h2 className="text-white text-2xl uppercase tracking-tighter">Another Fact</h2>
         <p className="text-lg">The same factual statement, when framed differently, can produce:</p>
@@ -331,10 +307,8 @@ export default function Homepage() {
         <FramingToggle />
       </Section>
 
-      {/* 4. QUOTE 1 */}
       <Section><QuoteBlock text="We do not see things as they are. We see them as we are." author="Anaïs Nin" /></Section>
 
-      {/* 5. HOW IT PERSUADES */}
       <Section>
         <h2 className="text-2xl text-white mb-8">How Information Actually Persuades</h2>
         <p className="mb-6">Most persuasion does not work by convincing you. It works by:</p>
@@ -343,7 +317,6 @@ export default function Homepage() {
         <p className="text-lg text-white">By the time you ask “Is this true?”, your nervous system has already reacted. <br/><span className="text-red-500">Truth arrives late.</span></p>
       </Section>
 
-      {/* 6. DOCUMENTED REALITY */}
       <Section>
         <FactBox title="Documented Reality">
           <ul className="space-y-2 list-disc pl-4 text-neutral-400 text-base"><li>Framing effects alter decision-making</li><li>Emotional language increases belief retention</li><li>Authority tone increases compliance</li><li>Repetition increases perceived truth</li></ul>
@@ -351,11 +324,9 @@ export default function Homepage() {
         </FactBox>
       </Section>
 
-      {/* 7. QUOTE 2 */}
       <Section><QuoteBlock text="A lie can travel halfway around the world while the truth is putting on its shoes." author="Attributed to Mark Twain" context="Ironically, the attribution itself is disputed. Even the quote about misinformation is framed." /></Section>
       <Divider />
 
-      {/* 8. WHAT THIS IS */}
       <Section className="text-center">
         <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-6">What This Website Is</h2>
         <p className="text-xl mb-4">Reality Distortion Simulator is not a news site. <br/>It is not a fact-checker. <br/>It is not a detector.</p>
@@ -363,7 +334,6 @@ export default function Homepage() {
         <p>It shows how the same fact can create multiple psychological realities.</p>
       </Section>
 
-      {/* 9. INPUT & PROCESS */}
       <Section>
         <div className="grid md:grid-cols-2 gap-12">
           <div>
@@ -381,7 +351,6 @@ export default function Homepage() {
         </div>
       </Section>
 
-      {/* 10. PARALLEL VERSIONS */}
       <Section>
         <h2 className="text-2xl text-white mb-8">Parallel Versions Appear</h2>
         <p className="mb-8">The same information becomes:</p>
@@ -395,10 +364,8 @@ export default function Homepage() {
         <p className="mt-8 text-neutral-400">All of them are “true”. All of them feel different.</p>
       </Section>
 
-      {/* 11. QUOTE 3 */}
       <Section><QuoteBlock text="People don’t believe what is true. They believe what feels true." author="Cognitive Bias Research Summary" /></Section>
 
-      {/* 12. THE DANGEROUS PART */}
       <Section className="border-l-4 border-red-900 pl-8 py-2">
         <h2 className="text-red-500 uppercase tracking-widest text-sm mb-4">The Dangerous Part</h2>
         <p className="text-2xl text-white mb-6">One version will feel obvious.</p>
@@ -407,13 +374,10 @@ export default function Homepage() {
         <p>That reaction is automatic. This website does not shame it. <Highlight>It exposes it.</Highlight></p>
       </Section>
 
-      {/* 13. MOTIVATED REASONING */}
       <Section><FactBox title="Another Fact"><p>Once a belief is emotionally accepted, contradictory evidence is processed more critically than supportive evidence.</p><p className="mt-4 text-white">This is called motivated reasoning.</p><p>Your brain defends what it already feels.</p></FactBox></Section>
 
-      {/* 14. QUOTE 4 */}
       <Section><QuoteBlock text="It is difficult to get a man to understand something when his salary depends on his not understanding it." author="Upton Sinclair" context="Replace 'salary' with: ideology, identity, belonging. The mechanism remains." /></Section>
 
-      {/* 15. TRANSFORMATION */}
       <Section>
         <h2 className="text-2xl text-white mb-8">What Starts to Change</h2>
         <div className="grid md:grid-cols-2 gap-8">
@@ -423,7 +387,6 @@ export default function Homepage() {
         <p className="mt-8 text-center text-sm uppercase tracking-widest border border-neutral-800 p-4">That interruption is not weakness. It is awareness.</p>
       </Section>
 
-      {/* 16. NOT COMFORTING */}
       <Section className="text-center max-w-xl">
         <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-6">This Is Not Comforting</h2>
         <p className="mb-4">This does not make you immune. No one is immune.</p>
@@ -431,16 +394,13 @@ export default function Homepage() {
         <p className="text-white text-lg">Sometimes, slowing is the only defense.</p>
       </Section>
       
-      {/* 17. QUOTE 5 */}
       <Section><QuoteBlock text="The most effective propaganda is not what is said, but what is taken for granted." author="Media Theory Principle" /></Section>
       <Divider />
 
-      {/* ** NEW: SPOT THE BIAS GAME ** */}
       <Section>
          <BiasGame />
       </Section>
 
-      {/* 18. NOT / WARNING */}
       <Section>
         <div className="grid md:grid-cols-2 gap-16">
           <div>
@@ -457,7 +417,6 @@ export default function Homepage() {
         </div>
       </Section>
 
-      {/* 19. CTA */}
       <section className="py-40 px-6 flex flex-col items-center justify-center bg-black border-t border-neutral-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-red-900/5 blur-[150px]" />
         <div className="relative z-10 text-center max-w-2xl space-y-12">
@@ -472,7 +431,6 @@ export default function Homepage() {
           <div className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity space-y-2"><p>Understanding framing doesn’t make you safe.</p><p className="text-red-500">It makes you responsible.</p></div>
         </div>
       </section>
-
     </main>
   );
 }
