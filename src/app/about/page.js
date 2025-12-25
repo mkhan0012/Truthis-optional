@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform, useVelocity, useReducedMotion, useMotionValueEvent } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { motion, useScroll, useTransform, useVelocity } from "framer-motion";
+import { ArrowLeft, FlaskConical, Eye, Swords } from "lucide-react"; 
 
 // --- 1. CONFIGURATION ---
 
@@ -25,8 +25,11 @@ const SCRIPT = [
   { id: 14, range: [0.76, 0.81], text: "Why does this one feel true to you?", type: "introspection" },
   { id: 15, range: [0.81, 0.86], text: "Awareness is irreversible.", type: "mirror" }, 
   { id: 16, range: [0.86, 0.90], text: "SOME PEOPLE GET MAD HERE.", type: "confrontation" },
-  { id: 17, range: [0.90, 0.94], text: "This is not a comfort tool.", type: "authority" },
-  { id: 18, range: [0.94, 0.98], text: "It is a mirror.", type: "resolution" },
+  { id: 17, range: [0.90, 0.93], text: "It is a mirror.", type: "resolution" },
+  
+  // --- NEW ECOSYSTEM SECTION ---
+  { id: 18, range: [0.93, 0.98], text: "", type: "ecosystem" },
+  
   { id: 19, range: [0.98, 1.0], text: "ENTER THE SIMULATOR", type: "cta" },
 ];
 
@@ -40,6 +43,67 @@ const SceneSilence = ({ progress }) => {
     </motion.div>
   );
 };
+
+// --- NEW: ECOSYSTEM SCENE ---
+const SceneEcosystem = ({ progress }) => {
+    // Fade in/out logic
+    const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+    const scale = useTransform(progress, [0, 0.5], [0.9, 1]);
+
+    return (
+        <motion.div style={{ opacity, scale }} className="w-full max-w-6xl px-4 flex flex-col items-center">
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-12 text-center">The Architecture of Truth</h2>
+            
+            <div className="grid md:grid-cols-3 gap-8 w-full relative">
+                {/* Connector Line */}
+                <div className="hidden md:block absolute top-12 left-10 right-10 h-0.5 bg-gradient-to-r from-transparent via-neutral-800 to-transparent z-0" />
+
+                {/* 1. FRAMEWORK */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-6 opacity-50">
+                    <div className="w-24 h-24 bg-black border border-neutral-800 rounded-full flex items-center justify-center">
+                        <FlaskConical className="w-8 h-8 text-neutral-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-neutral-700 uppercase tracking-widest">Phase 1: Origin</div>
+                        <h4 className="text-xl text-neutral-400 font-bold">Framework</h4>
+                        <p className="text-xs text-neutral-600 max-w-[200px] mx-auto leading-relaxed">
+                            The Lab. Where viral beliefs are engineered and injected into the system.
+                        </p>
+                    </div>
+                </div>
+
+                {/* 2. TRUTH IS OPTIONAL */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+                    <div className="w-24 h-24 bg-black border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+                        <Eye className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-white uppercase tracking-widest">Phase 2: Perception</div>
+                        <h4 className="text-xl text-white font-bold">Truth Is Optional</h4>
+                        <p className="text-xs text-neutral-400 max-w-[200px] mx-auto leading-relaxed">
+                            The Lens. Where the belief is distorted by emotional vectors to alter reality.
+                        </p>
+                        <span className="inline-block px-2 py-1 rounded bg-white text-black text-[8px] font-bold uppercase tracking-widest mt-2">You Are Here</span>
+                    </div>
+                </div>
+
+                {/* 3. ARGUELY */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-6 opacity-50">
+                    <div className="w-24 h-24 bg-black border border-neutral-800 rounded-full flex items-center justify-center">
+                        <Swords className="w-8 h-8 text-neutral-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-neutral-700 uppercase tracking-widest">Phase 3: Conflict</div>
+                        <h4 className="text-xl text-neutral-400 font-bold">Arguely</h4>
+                        <p className="text-xs text-neutral-600 max-w-[200px] mx-auto leading-relaxed">
+                            The Arena. Where logic is used to defend or deconstruct the distorted reality.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
 
 const SceneGaslight = ({ progress, scrollVelocity }) => {
     const [text, setText] = useState("Wait. Did that change?");
@@ -89,7 +153,6 @@ const SceneRealization = ({ progress, text }) => {
 };
 
 const SceneDissonance = ({ progress, text }) => {
-    // 1. Hooks (MUST RUN EVERY TIME)
     const y1 = useTransform(progress, [0, 1], [100, 0]);
     const y2 = useTransform(progress, [0, 1], [-100, 0]);
     const x1 = useTransform(progress, [0, 1], [-100, 0]);
@@ -163,7 +226,6 @@ const GenericScene = ({ progress, text, type }) => {
   const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
   const blur = useTransform(progress, [0, 0.2], ["10px", "0px"]);
   
-  // Deterministic Shake
   const shake = useTransform(progress, (v) => {
       if (type === 'discomfort' && v > 0.4 && v < 0.6) {
           return Math.sin(v * 50) * 4; 
@@ -202,11 +264,9 @@ const GenericScene = ({ progress, text, type }) => {
 
 
 // --- 3. WRAPPER COMPONENT ---
-// This ensures hooks are isolated per scene
 const SceneWrapper = ({ scene, scrollYProgress, scrollVelocity }) => {
   const sceneProgress = useTransform(scrollYProgress, scene.range, [0, 1]);
   
-  // Visibility logic
   const opacity = useTransform(scrollYProgress, (v) => {
       const start = scene.range[0] - 0.001;
       const end = scene.range[1] + 0.001;
@@ -228,6 +288,8 @@ const SceneWrapper = ({ scene, scrollYProgress, scrollVelocity }) => {
             <SceneDissonance progress={sceneProgress} text={scene.text} />
         ) : scene.type === 'mirror' ? (
             <SceneMirror progress={sceneProgress} text={scene.text} />
+        ) : scene.type === 'ecosystem' ? ( // NEW TYPE
+            <SceneEcosystem progress={sceneProgress} />
         ) : scene.type === 'cta' ? (
             <SceneCTA progress={sceneProgress} text={scene.text} />
         ) : (
@@ -247,13 +309,12 @@ export default function AboutPage() {
   const { scrollYProgress, scrollY } = useScroll({ target: containerRef });
   const scrollVelocity = useVelocity(scrollY);
   
-  // Memoize script to ensure stability
   const activeScript = useMemo(() => SCRIPT.filter(scene => scene.type !== 'silence'), []);
 
   return (
-    <main ref={containerRef} className="bg-black min-h-[2000vh] relative selection:bg-red-900 selection:text-white cursor-default">
+    <main ref={containerRef} className="bg-black min-h-[2200vh] relative selection:bg-red-900 selection:text-white cursor-default">
       
-      {/* 4.1 UI CONTROLS (Simplified) */}
+      {/* 4.1 UI CONTROLS - BUTTON REMOVED AS REQUESTED */}
       <div className="fixed top-0 left-0 w-full p-6 z-[100] flex justify-between items-start pointer-events-none">
           <button 
             onClick={() => router.push('/')}

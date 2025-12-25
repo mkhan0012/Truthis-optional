@@ -3,13 +3,12 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Quote, Eye, Check, X, AlertTriangle, ShieldAlert } from "lucide-react";
+import { 
+  ArrowRight, Quote, Eye, Check, X, AlertTriangle, ShieldAlert, 
+  FlaskConical, Swords, ExternalLink 
+} from "lucide-react";
 
-/**
- * 1. VIRAL SIGNAL HANDLER (Logic Extracted Here)
- * This component handles the decoding of the "Viral Signal" payload from Framework.
- * It is wrapped in Suspense to prevent Next.js build errors.
- */
+// --- 1. VIRAL SIGNAL HANDLER (Logic Extracted Here) ---
 const ViralSignalHandler = ({ onDefend }) => {
   const searchParams = useSearchParams();
   const signal = searchParams.get('signal');
@@ -18,7 +17,6 @@ const ViralSignalHandler = ({ onDefend }) => {
 
   let data = null;
   try {
-    // Decode the Base64 payload packaged in Framework
     data = JSON.parse(atob(signal));
   } catch (e) {
     console.error("Failed to decode viral signal");
@@ -70,45 +68,92 @@ const ViralSignalHandler = ({ onDefend }) => {
   );
 };
 
-// --- BIAS GAME COMPONENT ---
+// --- TRILOGY ECOSYSTEM MAP ---
+const TrilogyShowcase = () => {
+  return (
+    <div className="py-24 border-y border-neutral-900 bg-neutral-950/30">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-4">The Ecosystem</h2>
+          <h3 className="text-3xl md:text-4xl text-white font-bold uppercase tracking-tighter">The Architecture of Truth</h3>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 relative">
+          <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-neutral-800 to-transparent z-0" />
+
+          {/* NODE 1: FRAMEWORK (UPDATED TO BLUE THEME) */}
+          <a href="https://framework-seven-steel.vercel.app/" target="_blank" rel="noopener noreferrer" className="relative z-10 group block">
+            <div className="flex flex-col items-center text-center space-y-6">
+              {/* Changed hover border/shadow to BLUE */}
+              <div className="w-24 h-24 bg-black border border-neutral-800 rounded-full flex items-center justify-center group-hover:border-blue-600 group-hover:shadow-[0_0_30px_rgba(37,99,235,0.3)] transition-all duration-500">
+                {/* Changed icon hover to BLUE */}
+                <FlaskConical className="w-8 h-8 text-neutral-500 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <div className="space-y-2">
+                {/* Changed text hover to BLUE */}
+                <div className="text-xs font-bold text-neutral-600 uppercase tracking-widest group-hover:text-blue-500 transition-colors">Phase 1: The Lab</div>
+                <h4 className="text-xl text-white font-bold">Framework</h4>
+                <p className="text-sm text-neutral-500 max-w-[200px] mx-auto leading-relaxed">
+                  Beliefs are engineered. You construct a high-virality statement designed to survive.
+                </p>
+                <span className="text-[10px] text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">Click to Enter &rarr;</span>
+              </div>
+            </div>
+          </a>
+
+          {/* NODE 2: TRUTH IS OPTIONAL (WHITE/NEUTRAL) */}
+          <div className="relative z-10 group">
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div className="w-24 h-24 bg-black border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                <Eye className="w-8 h-8 text-white" />
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-white uppercase tracking-widest">Phase 2: The Lens</div>
+                <h4 className="text-xl text-white font-bold">Truth Is Optional</h4>
+                <p className="text-sm text-neutral-400 max-w-[200px] mx-auto leading-relaxed">
+                  Reality is distorted. The belief is refracted through emotional vectors (Fear, Validation).
+                </p>
+                <div className="inline-block px-2 py-1 bg-white/10 text-[10px] uppercase tracking-widest text-white rounded">You Are Here</div>
+              </div>
+            </div>
+          </div>
+
+          {/* NODE 3: ARGUELY (RED) */}
+          <a href="https://debate-again.vercel.app" target="_blank" rel="noopener noreferrer" className="relative z-10 group block">
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div className="w-24 h-24 bg-black border border-neutral-800 rounded-full flex items-center justify-center group-hover:border-red-600 group-hover:shadow-[0_0_30px_rgba(220,38,38,0.2)] transition-all duration-500">
+                <Swords className="w-8 h-8 text-neutral-500 group-hover:text-red-500 transition-colors" />
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-neutral-600 uppercase tracking-widest group-hover:text-red-500 transition-colors">Phase 3: The Arena</div>
+                <h4 className="text-xl text-white font-bold">Arguely</h4>
+                <p className="text-sm text-neutral-500 max-w-[200px] mx-auto leading-relaxed">
+                  Logic is the weapon. You must defend the distorted reality against an AI logic engine.
+                </p>
+                <span className="text-[10px] text-red-500 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">Click to Enter &rarr;</span>
+              </div>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- [KEEP BIASGAME, REACTIONTEST, FRAMINGTOGGLE, TEXTXRAY, SECTION, QUOTEBLOCK, FACTBOX] ---
 const BiasGame = () => {
   const [step, setStep] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [correct, setCorrect] = useState(false);
 
   const questions = [
-    {
-      text: "The regime's desperate claw-back of funds will devastate the working class.",
-      options: [
-        { label: "Neutral Reporting", isCorrect: false },
-        { label: "Fear / Alarmism", isCorrect: true },
-        { label: "Optimism", isCorrect: false }
-      ],
-      explanation: "Words like 'regime', 'desperate', and 'devastate' are high-arousal fear triggers."
-    },
-    {
-      text: "We are streamlining our workforce to optimize synergy and agility for Q4.",
-      options: [
-        { label: "Corporate Spin", isCorrect: true },
-        { label: "Objective Fact", isCorrect: false },
-        { label: "Cynicism", isCorrect: false }
-      ],
-      explanation: "'Streamlining' and 'optimize synergy' are classic euphemisms for firing people."
-    }
+    { text: "The regime's desperate claw-back of funds will devastate the working class.", options: [{ label: "Neutral Reporting", isCorrect: false }, { label: "Fear / Alarmism", isCorrect: true }, { label: "Optimism", isCorrect: false }], explanation: "Words like 'regime', 'desperate', and 'devastate' are high-arousal fear triggers." },
+    { text: "We are streamlining our workforce to optimize synergy and agility for Q4.", options: [{ label: "Corporate Spin", isCorrect: true }, { label: "Objective Fact", isCorrect: false }, { label: "Cynicism", isCorrect: false }], explanation: "'Streamlining' and 'optimize synergy' are classic euphemisms for firing people." }
   ];
-
   const currentQ = questions[step % questions.length];
-
-  const handleGuess = (isCorrect) => {
-    setAnswered(true);
-    setCorrect(isCorrect);
-  };
-
-  const nextQ = () => {
-    setStep(step + 1);
-    setAnswered(false);
-    setCorrect(false);
-  };
+  const handleGuess = (isCorrect) => { setAnswered(true); setCorrect(isCorrect); };
+  const nextQ = () => { setStep(step + 1); setAnswered(false); setCorrect(false); };
 
   return (
     <div className="border border-neutral-800 bg-neutral-900/30 p-8 my-24 max-w-2xl mx-auto relative overflow-hidden">
@@ -118,16 +163,11 @@ const BiasGame = () => {
         <p className="text-2xl text-white font-serif mb-8">"{currentQ.text}"</p>
         {!answered ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {currentQ.options.map((opt, i) => (
-              <button key={i} onClick={() => handleGuess(opt.isCorrect)} className="py-3 border border-neutral-700 hover:bg-white hover:text-black transition-colors text-sm uppercase tracking-widest">{opt.label}</button>
-            ))}
+            {currentQ.options.map((opt, i) => <button key={i} onClick={() => handleGuess(opt.isCorrect)} className="py-3 border border-neutral-700 hover:bg-white hover:text-black transition-colors text-sm uppercase tracking-widest">{opt.label}</button>)}
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className={`flex items-center gap-3 text-lg font-bold ${correct ? 'text-green-500' : 'text-red-500'}`}>
-               {correct ? <Check className="w-6 h-6"/> : <X className="w-6 h-6"/>}
-               {correct ? "Correct Identification." : "Incorrect."}
-            </div>
+            <div className={`flex items-center gap-3 text-lg font-bold ${correct ? 'text-green-500' : 'text-red-500'}`}>{correct ? <Check className="w-6 h-6"/> : <X className="w-6 h-6"/>}{correct ? "Correct Identification." : "Incorrect."}</div>
             <p className="text-neutral-300">{currentQ.explanation}</p>
             <button onClick={nextQ} className="text-xs underline text-neutral-500 hover:text-white">Next Sample</button>
           </div>
@@ -137,60 +177,21 @@ const BiasGame = () => {
   );
 };
 
-// --- ANIMATION CONFIG ---
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
-};
+const fadeUp = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } } };
 
-// --- INTERACTIVE COMPONENTS ---
 const ReactionTest = () => {
   const [state, setState] = useState('idle');
   const [result, setResult] = useState(null);
   const startTimeRef = useRef(null);
   const timeoutRef = useRef(null);
-
-  const startTest = () => {
-    setState('waiting');
-    setResult(null);
-    const delay = 1000 + Math.random() * 2000;
-    timeoutRef.current = setTimeout(() => {
-      setState('ready');
-      startTimeRef.current = Date.now();
-    }, delay);
-  };
-
-  const handleInteract = () => {
-    if (state === 'ready') {
-      const time = Date.now() - startTimeRef.current;
-      setResult(time);
-      setState('done');
-    } else if (state === 'waiting') {
-      if(timeoutRef.current) clearTimeout(timeoutRef.current);
-      setState('idle'); 
-      alert("Too early. Wait for the signal.");
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault(); 
-        if (state === 'idle') startTest();
-        else handleInteract();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state]);
-
+  const startTest = () => { setState('waiting'); setResult(null); const delay = 1000 + Math.random() * 2000; timeoutRef.current = setTimeout(() => { setState('ready'); startTimeRef.current = Date.now(); }, delay); };
+  const handleInteract = () => { if (state === 'ready') { const time = Date.now() - startTimeRef.current; setResult(time); setState('done'); } else if (state === 'waiting') { if(timeoutRef.current) clearTimeout(timeoutRef.current); setState('idle'); alert("Too early. Wait for the signal."); } };
+  useEffect(() => { const handleKeyDown = (e) => { if (e.code === 'Space') { e.preventDefault(); if (state === 'idle') startTest(); else handleInteract(); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, [state]);
   return (
     <div className="border border-neutral-800 bg-neutral-900/30 p-8 my-12 text-center select-none relative group">
       <div className="absolute top-0 left-0 w-1 h-full bg-red-900 group-hover:bg-red-600 transition-colors" />
       <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-6">Interaction: The Millisecond Gap</h3>
-      {state === 'idle' && (
-        <button onClick={startTest} className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-neutral-200 transition-colors">Test Your Reflexes <span className="text-[10px] block opacity-50 mt-1">(or press SPACE)</span></button>
-      )}
+      {state === 'idle' && <button onClick={startTest} className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-neutral-200 transition-colors">Test Your Reflexes <span className="text-[10px] block opacity-50 mt-1">(or press SPACE)</span></button>}
       {state === 'waiting' && <div onMouseDown={handleInteract} className="w-full h-32 flex items-center justify-center bg-neutral-800 cursor-pointer animate-pulse"><span className="text-neutral-500 uppercase tracking-widest">Wait for Green...</span></div>}
       {state === 'ready' && <div onMouseDown={handleInteract} className="w-full h-32 flex items-center justify-center bg-red-600 cursor-pointer"><span className="text-white font-bold uppercase tracking-widest text-xl">CLICK NOW!</span></div>}
       {state === 'done' && <div className="space-y-4"><div className="text-5xl font-mono text-white">{result}ms</div><p className="text-neutral-400 text-sm max-w-md mx-auto">Emotional processing takes ~200ms. <br/><span className="text-red-500">You reacted before you could fully think.</span></p><button onClick={() => setState('idle')} className="text-xs text-neutral-500 underline mt-4 hover:text-white">Try Again</button></div>}
@@ -200,42 +201,28 @@ const ReactionTest = () => {
 
 const FramingToggle = () => {
   const [mode, setMode] = useState('neutral');
-  const content = {
-    neutral: { text: "The company announced a 10% workforce reduction.", color: "text-neutral-400" },
-    alarmist: { text: "Corporate bloodbath: Thousands slashed as crisis deepens.", color: "text-red-500" },
-    corporate: { text: "We are optimizing our talent synergy for future agility.", color: "text-blue-400" },
-  };
+  const content = { neutral: { text: "The company announced a 10% workforce reduction.", color: "text-neutral-400" }, alarmist: { text: "Corporate bloodbath: Thousands slashed as crisis deepens.", color: "text-red-500" }, corporate: { text: "We are optimizing our talent synergy for future agility.", color: "text-blue-400" } };
   return (
     <div className="border border-neutral-800 bg-black p-6 my-12">
-       <div className="flex justify-center gap-4 mb-8 border-b border-neutral-900 pb-4">
-          {['neutral', 'alarmist', 'corporate'].map((m) => (
-             <button key={m} onClick={() => setMode(m)} className={`text-[10px] uppercase tracking-widest px-3 py-1 transition-all ${mode === m ? 'bg-white text-black' : 'text-neutral-600 hover:text-white'}`}>{m}</button>
-          ))}
-       </div>
-       <div className="h-32 flex items-center justify-center text-center px-4">
-          <motion.p key={mode} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`text-xl md:text-2xl font-serif ${content[mode].color}`}>"{content[mode].text}"</motion.p>
-       </div>
+       <div className="flex justify-center gap-4 mb-8 border-b border-neutral-900 pb-4">{['neutral', 'alarmist', 'corporate'].map((m) => <button key={m} onClick={() => setMode(m)} className={`text-[10px] uppercase tracking-widest px-3 py-1 transition-all ${mode === m ? 'bg-white text-black' : 'text-neutral-600 hover:text-white'}`}>{m}</button>)}</div>
+       <div className="h-32 flex items-center justify-center text-center px-4"><motion.p key={mode} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`text-xl md:text-2xl font-serif ${content[mode].color}`}>"{content[mode].text}"</motion.p></div>
        <p className="text-center text-[10px] text-neutral-600 mt-4 uppercase">The fact (10% cut) remained constant.</p>
     </div>
   );
 };
 
-const TextXRay = () => {
-  return (
-    <div className="my-12 p-8 border border-neutral-800 bg-neutral-900/10 text-center cursor-help group">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-6 flex items-center justify-center gap-2"><Eye className="w-4 h-4" /> Hover to Reveal Bias</h3>
-      <p className="text-xl md:text-2xl text-neutral-300 leading-relaxed font-serif">
-        "The <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors">controversial<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Implies guilt</span></span> decision sparked 
-        <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">outrage<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Emotional Scale</span></span>
-        among the <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">vulnerable<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Victim Frame</span></span> population."
-      </p>
-    </div>
-  );
-};
-
-const Section = ({ children, className = "" }) => (
-  <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-10% 0px -10% 0px" }} variants={fadeUp} className={`max-w-3xl mx-auto py-24 px-6 md:px-0 ${className}`}>{children}</motion.section>
+const TextXRay = () => (
+  <div className="my-12 p-8 border border-neutral-800 bg-neutral-900/10 text-center cursor-help group">
+    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-6 flex items-center justify-center gap-2"><Eye className="w-4 h-4" /> Hover to Reveal Bias</h3>
+    <p className="text-xl md:text-2xl text-neutral-300 leading-relaxed font-serif">
+      "The <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors">controversial<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Implies guilt</span></span> decision sparked 
+      <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">outrage<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Emotional Scale</span></span>
+      among the <span className="relative inline-block border-b border-dashed border-neutral-600 hover:border-red-500 hover:text-red-500 transition-colors mx-1">vulnerable<span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-red-900 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-sans uppercase tracking-wide">Victim Frame</span></span> population."
+    </p>
+  </div>
 );
+
+const Section = ({ children, className = "" }) => <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-10% 0px -10% 0px" }} variants={fadeUp} className={`max-w-3xl mx-auto py-24 px-6 md:px-0 ${className}`}>{children}</motion.section>;
 const Highlight = ({ children }) => <span className="text-white font-bold">{children}</span>;
 const Divider = () => <div className="w-px h-16 bg-gradient-to-b from-transparent via-neutral-800 to-transparent mx-auto my-16 opacity-50" />;
 const QuoteBlock = ({ text, author, context }) => (
@@ -261,21 +248,32 @@ export default function Homepage() {
 
   const handleDefend = (topic) => {
     const encodedTopic = encodeURIComponent(topic);
-    // Redirect bridge to Arguely Arena
     window.location.href = `https://debate-again.vercel.app/create?topic=${encodedTopic}&source=TIO`;
   };
 
   return (
     <main className="bg-black min-h-screen text-neutral-500 font-mono selection:bg-red-900 selection:text-white overflow-x-hidden">
       
-      {/* 2. WRAP SIGNAL HANDLER IN SUSPENSE TO FIX BUILD ERROR */}
+      {/* 2. WRAP SIGNAL HANDLER IN SUSPENSE */}
       <Suspense fallback={null}>
         <ViralSignalHandler onDefend={handleDefend} />
       </Suspense>
 
       <motion.nav initial={{ opacity: 0 }} animate={{ opacity: showNav ? 1 : 0 }} transition={{ duration: 1 }} className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none">
         <span className="text-[10px] uppercase tracking-widest text-neutral-700">RDS // v2.0</span>
-        <button onClick={() => router.push('/about')} className="pointer-events-auto px-6 py-3 border border-neutral-900 bg-black hover:border-neutral-600 text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-all duration-300">[ About ]</button>
+        <div className="pointer-events-auto flex items-center gap-6">
+            {/* ADDED FRAMEWORK LINK */}
+            <a 
+                href="https://framework-seven-steel.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors text-[10px] uppercase tracking-widest group"
+            >
+                [ Framework ] <ExternalLink size={10} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+            </a>
+            
+            <button onClick={() => router.push('/about')} className="px-6 py-3 border border-neutral-900 bg-black hover:border-neutral-600 text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-all duration-300">[ About ]</button>
+        </div>
       </motion.nav>
 
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative z-10">
@@ -314,6 +312,9 @@ export default function Homepage() {
         <FramingToggle />
       </Section>
 
+      {/* --- ADDED: THE ARCHITECTURE OF TRUTH --- */}
+      <TrilogyShowcase />
+
       <Section><QuoteBlock text="We do not see things as they are. We see them as we are." author="Anaïs Nin" /></Section>
 
       <Section>
@@ -341,6 +342,7 @@ export default function Homepage() {
         <p>It shows how the same fact can create multiple psychological realities.</p>
       </Section>
 
+      {/* [REST OF YOUR SECTIONS: Input, Parallel Versions, etc.] */}
       <Section>
         <div className="grid md:grid-cols-2 gap-12">
           <div>
